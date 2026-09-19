@@ -89,32 +89,6 @@ language sql stable security definer set search_path = public, pg_temp as $$
   limit 1;
 $$;
 
-create or replace function public._master_ok(p text)
-returns boolean
-language sql stable security definer set search_path = public, pg_temp as $$
-  select length(coalesce(p, '')) >= 12
-     and exists (select 1 from app_config where k = 'master_key' and v = p);
-$$;
-
-create or replace function public._check_images(p jsonb)
-returns jsonb
-language plpgsql immutable set search_path = public, pg_temp as $$
-declare e jsonb;
-begin
-  if p is null or p = 'null'::jsonb then return '[]'::jsonb; end if;
-  if jsonb_typeof(p) <> 'array' or jsonb_array_length(p) > 5 then
-    raise exception 'invalid_images';
-  end if;
-  for e in select * from jsonb_array_elements(p) loop
-    if jsonb_typeof(e) <> 'string'
-       or (e #>> '{}') !~ '^data:image/(jpeg|png|webp|gif);base64,'
-       or length(e #>> '{}') > 320000 then
-      raise exception 'invalid_images';
-    end if;
-  end loop;
-  return p;
-end $$;
-
 -- 案件キーは英小文字+数字の16文字（約82ビット）。推測は現実的に不可能です。
 -- uuid の固定ビット（version / variant）を避けて、16バイト分の乱数から作ります。
 create or replace function public._new_key()
@@ -460,7 +434,7 @@ language sql stable security definer set search_path = public, pg_temp as $$
   select _master_ok(p_master) or _is_staff();
 $$;
 
--- 案件キー + ログイン状態から、案件と役割を決める
+-- 案件キー + ログイン状態から、案件と役割を決める（クライアント用URLはログイン必須。003 で変更）
 create or replace function public._who(p_key text)
 returns table(project_id uuid, role text)
 language plpgsql stable security definer set search_path = public, pg_temp as $$
@@ -475,12 +449,17 @@ begin
     project_id := pr.id; role := 'admin'; return next; return;
   end if;
 
-  -- キーだけで入れる案件
   if pr.access = 'open' then
-    project_id := pr.id; role := base; return next; return;
+    -- 制作チーム用URLは、従来どおりログイン不要
+    if base = 'admin' then
+      project_id := pr.id; role := 'admin'; return next; return;
+    end if;
+    -- クライアント用URLは、ログイン必須（メールアドレスは誰でもよい）
+    if em = '' then raise exception 'auth_required'; end if;
+    project_id := pr.id; role := 'client'; return next; return;
   end if;
 
-  -- メール認証が必要な案件
+  -- メール認証が必要な案件：許可したメールアドレスだけ
   if em = '' then raise exception 'auth_required'; end if;
   if exists (select 1 from project_members m where m.project_id = pr.id and m.email = em) then
     project_id := pr.id; role := 'client'; return next; return;
