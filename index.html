@@ -131,7 +131,10 @@
   .list-head { padding: 6px 8px; border-bottom: 1px solid var(--rule); color: var(--muted); font-size: 11.5px; letter-spacing: .1em; }
   .rows { border-bottom: 1px solid var(--rule); }
   .row-i { width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--rule); padding: 11px 8px; }
-  .row-i:first-child { border-top: 0; }
+  .rw { position: relative; }
+  .rw:first-child .row-i { border-top: 0; }
+  .rdel { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 1; }
+  #listView.adm .list-head, #listView.adm .row-i { grid-template-columns: 3.4em minmax(0, 1fr) 4em 6.2em 9em 5.2em; }
   .row-i:hover { background: var(--surface); }
   .c-no { color: var(--muted); font-size: 13px; }
   .ttl { display: block; font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; }
@@ -180,6 +183,8 @@
     .row-i { grid-template-columns: 3em minmax(0, 1fr) auto; grid-template-areas: "no main st" ". when when"; row-gap: 2px; }
     .row-i .c-no { grid-area: no; } .row-i .c-main { grid-area: main; } .row-i .pill { grid-area: st; }
     .row-i .prio { display: none; } .row-i .c-when { grid-area: when; }
+    #listView.adm .row-i { grid-template-columns: 3em minmax(0, 1fr) auto; padding-bottom: 30px; }
+    .rdel { top: auto; bottom: 8px; transform: none; }
     .grid2 { grid-template-columns: 1fr; }
     .brand { font-size: 19px; }
   }
@@ -191,6 +196,8 @@
   .urlrow input { font-size: 12.5px; padding: 6px 8px; font-family: "IBM Plex Mono", ui-monospace, monospace; }
   .urlrow a.ghost { text-decoration: none; }
   .skeleton { color: var(--muted); font-size: 13px; padding: 26px 4px; }
+  .cact { margin-left: auto; display: flex; gap: 12px; }
+  .cedit textarea { min-height: 70px; margin-top: 4px; }
   @media (max-width: 680px) { .urlrow { grid-template-columns: 1fr auto auto; } .urlrow .label { grid-column: 1 / -1; } }
 </style>
 </head>
@@ -198,15 +205,13 @@
 
 <header class="top">
   <div class="wrap top-in">
-    <h1 class="brand"><a href="#/" style="color:inherit;text-decoration:none">修正依頼シート</a></h1>
+    <h1 class="brand"><a href="#/" id="brandLink" style="color:inherit;text-decoration:none">修正依頼シート</a></h1>
     <span class="sp"></span>
     <span class="badge" id="roleBadge" hidden></span>
   </div>
 </header>
 
 <main class="wrap">
-  <div class="notice" id="demoNote" hidden></div>
-
   <!-- ホーム -->
   <section id="homeView" hidden>
     <h2 class="ititle" style="margin-top:28px">修正依頼シート</h2>
@@ -216,11 +221,6 @@
       <div class="row"><span class="hint">URLを開いたときに自動で表示される場合は、この操作は不要です</span><button type="submit" class="primary">開く</button></div>
       <p class="err" id="hErr" hidden></p>
     </form>
-    <div class="panel" id="demoBox" hidden>
-      <h3>デモ用</h3>
-      <p class="hint" style="margin:0 0 8px">Supabase に未接続のため、サンプルの案件で試せます。</p>
-      <a href="#/p/demo-client">クライアントとして開く</a> ／ <a href="#/p/demo-admin">制作チームとして開く</a> ／ <a href="#/master">案件の管理（キー: demo-master）</a>
-    </div>
     <p><a href="#/master" class="linkbtn">制作チームの方はこちら（案件の管理）</a></p>
   </section>
 
@@ -284,7 +284,7 @@
       </div>
       <div class="field"><label for="nName">お名前</label><input type="text" id="nName" maxlength="40" placeholder="例）田中" autocomplete="off"></div>
       <div class="field"><label for="nPage">ページのURL・場所（わかれば）</label><input type="text" id="nPage" maxlength="300" placeholder="例）https://example.com/about　／　トップ > ヘッダー" autocomplete="off"></div>
-      <div class="row"><span class="hint">題名と優先度は内容から自動で付けます（制作チームが後から直せます）</span><span><button type="button" class="linkbtn" id="newCancel">キャンセル</button> <button type="submit" class="primary">送信</button></span></div>
+      <div class="row"><span></span><span><button type="button" class="linkbtn" id="newCancel">キャンセル</button> <button type="submit" class="primary">入力する</button></span></div>
       <p class="err" id="nErr" hidden></p>
     </form>
 
@@ -299,6 +299,22 @@
   <!-- 詳細 -->
   <section id="issueView" hidden>
     <button type="button" class="back" id="backBtn">← 一覧へ戻る</button>
+    <form class="panel" id="eForm" hidden>
+      <h3>内容を編集する</h3>
+      <div class="field"><label for="eDetail">コメント内容</label><textarea id="eDetail" maxlength="3000" style="min-height:120px"></textarea></div>
+      <div class="field"><label for="ePage">ページのURL・場所</label><input type="text" id="ePage" maxlength="300" autocomplete="off"></div>
+      <div class="field">
+        <span>画像（任意・5枚まで）</span>
+        <div class="attach">
+          <button type="button" class="ghost" id="ePick">画像を選ぶ</button>
+          <span class="hint">Ctrl+V（Macは ⌘+V）で貼り付け、ドラッグ＆ドロップもできます。貼った画像には赤枠や矢印を書き込めます。</span>
+          <input type="file" id="eFile" accept="image/*" multiple hidden>
+        </div>
+        <div class="thumbs" id="eThumbs" hidden></div>
+      </div>
+      <div class="row"><span></span><span><button type="button" class="linkbtn" id="eCancel">キャンセル</button> <button type="submit" class="primary">保存</button></span></div>
+      <p class="err" id="eErr" hidden></p>
+    </form>
     <div id="issueBox"></div>
     <p class="err" id="iErr" hidden></p>
     <form class="panel" id="cForm">
@@ -349,12 +365,10 @@
      url     : Supabase の Project URL
      anonKey : Supabase の公開キー（anon / publishable key）。公開して問題ないキーです。
                ※ service_role / secret キーは、絶対にここへ書かないでください。
-     anonKey が空のときは、ブラウザ内だけで動くデモモードになります。 */
+     anonKey が空のときは、データを読み書きできません。 */
   var CFG = { url: "https://oigmsndcrlrpubfcpicn.supabase.co", anonKey: "sb_publishable_MiLXNQsoNCTSWYli0dVB9A_7yMFmxSG" };
-  var DEMO = !CFG.anonKey;
 
   var STATUSES = ["未対応", "対応中", "確認待ち", "完了", "保留"];
-  var CATEGORIES = ["デザイン", "文言・テキスト", "画像・写真", "機能・動作", "その他"];
   var ROLE_LABEL = { client: "クライアント", admin: "制作チーム" };
   var ERRORS = {
     invalid_key: "このキーは無効です。URLをご確認ください。",
@@ -384,7 +398,7 @@
 
   /* ============ 通信（Supabase の関数を呼ぶ） ============ */
   async function rpc(name, args) {
-    if (DEMO) return demoRpc(name, args || {});
+    if (!CFG.anonKey) throw { code: "network" };
     var h = { "Content-Type": "application/json", apikey: CFG.anonKey };
     if (/^eyJ/.test(CFG.anonKey)) h.Authorization = "Bearer " + CFG.anonKey;
     var r;
@@ -396,87 +410,21 @@
     return j;
   }
 
-  /* ============ デモ用のデータ（Supabase 未接続のとき、ブラウザ内だけで動く） ============ */
-  var demo = null;
-  function demoRpc(name, a) {
-    function iso(m) { return new Date(Date.now() - m * 60000).toISOString(); }
-    function rk() { return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2); }
-    function load() {
-      if (demo) return demo;
-      try { var s = JSON.parse(localStorage.getItem("revision-sheet-demo-v1")); if (s && s.projects) { demo = s; return demo; } } catch (e) {}
-      demo = { nextCid: 4, projects: [{ id: "p1", name: "サンプル株式会社 コーポレートサイト", site_url: "https://example.com", client_key: "demo-client", admin_key: "demo-admin" }],
-        issues: [
-          { pid: "p1", no: 1, title: "トップページのキャッチコピーを差し替え", page_url: "https://example.com/", detail: "現在のコピーを「暮らしに、もう少しの余白を。」に変更してください。", category: "文言・テキスト", priority: "高", status: "対応中", reporter: "田中", assignee: "佐藤", images: [], created_at: iso(3000), updated_at: iso(200), comments: [{ id: 1, author: "佐藤", role: "admin", body: "承知しました。本日中に反映します。", images: [], created_at: iso(200) }] },
-          { pid: "p1", no: 2, title: "スマホでメニューボタンが押しにくい", page_url: "トップ > ヘッダー", detail: "iPhoneでメニューのボタンが小さく、何度か押し直しました。", category: "デザイン", priority: "中", status: "確認待ち", reporter: "田中", assignee: "佐藤", images: [], created_at: iso(2600), updated_at: iso(90), comments: [{ id: 2, author: "佐藤", role: "admin", body: "ボタンを44px四方に拡大しました。ご確認をお願いします。", images: [], created_at: iso(90) }] },
-          { pid: "p1", no: 3, title: "会社概要の代表者写真を新しいものに", page_url: "https://example.com/about", detail: "新しい写真を別途メールでお送りします。", category: "画像・写真", priority: "低", status: "未対応", reporter: "鈴木", assignee: "", images: [], created_at: iso(1500), updated_at: iso(1500), comments: [] }
-        ] };
-      return demo;
-    }
-    function save() { try { localStorage.setItem("revision-sheet-demo-v1", JSON.stringify(demo)); } catch (e) {} }
-    var d = load();
-    function bad(c) { throw { code: c }; }
-    function who(key) {
-      var p = d.projects.find(function (x) { return x.admin_key === key; });
-      if (p) return { p: p, role: "admin" };
-      p = d.projects.find(function (x) { return x.client_key === key; });
-      if (p) return { p: p, role: "client" };
-      bad("invalid_key");
-    }
-    function master() { if (a.p_master !== "demo-master") bad("forbidden"); }
-    function clone(x) { return JSON.parse(JSON.stringify(x)); }
-    var out = null;
-    if (name === "get_project") { var w = who(a.p_key); out = { name: w.p.name, site_url: w.p.site_url, role: w.role }; }
-    else if (name === "list_issues") {
-      var w1 = who(a.p_key);
-      out = d.issues.filter(function (i) { return i.pid === w1.p.id; }).sort(function (x, y) { return y.no - x.no; }).map(function (i) {
-        return { no: i.no, title: i.title, page_url: i.page_url, category: i.category, priority: i.priority, status: i.status, reporter: i.reporter, assignee: i.assignee, created_at: i.created_at, updated_at: i.updated_at, comment_count: i.comments.length, image_count: i.images.length };
-      });
-    } else if (name === "get_issue") {
-      var w2 = who(a.p_key), it = d.issues.find(function (i) { return i.pid === w2.p.id && i.no === a.p_no; });
-      if (!it) bad("not_found"); out = clone(it); delete out.pid;
-    } else if (name === "add_issue") {
-      var w3 = who(a.p_key), n = d.issues.filter(function (i) { return i.pid === w3.p.id; }).reduce(function (m, i) { return Math.max(m, i.no); }, 0) + 1;
-      d.issues.push({ pid: w3.p.id, no: n, title: (a.p_title || "（内容を確認）").slice(0, 120), page_url: a.p_page_url || "", detail: a.p_detail || "", category: CATEGORIES.indexOf(a.p_category) >= 0 ? a.p_category : "その他", priority: a.p_priority || "中", status: "未対応", reporter: a.p_reporter || "", assignee: "", images: a.p_images || [], created_at: new Date().toISOString(), updated_at: new Date().toISOString(), comments: [] });
-      out = n;
-    } else if (name === "add_comment") {
-      var w4 = who(a.p_key), it4 = d.issues.find(function (i) { return i.pid === w4.p.id && i.no === a.p_no; });
-      if (!it4) bad("not_found"); if (!(a.p_body || "").trim() && !(a.p_images || []).length) bad("empty");
-      it4.comments.push({ id: d.nextCid++, author: a.p_author || "", role: w4.role, body: a.p_body || "", images: a.p_images || [], created_at: new Date().toISOString() });
-      it4.updated_at = new Date().toISOString();
-    } else if (name === "update_issue") {
-      var w5 = who(a.p_key), it5 = d.issues.find(function (i) { return i.pid === w5.p.id && i.no === a.p_no; });
-      if (!it5) bad("not_found");
-      if (w5.role === "admin") { ["title", "status", "priority", "category", "assignee"].forEach(function (k) { if (a.p_patch[k] != null && !(k === "title" && !a.p_patch[k])) it5[k] = a.p_patch[k]; }); }
-      else if (it5.status === "確認待ち" && Object.keys(a.p_patch).length === 1 && ["完了", "未対応"].indexOf(a.p_patch.status) >= 0) it5.status = a.p_patch.status;
-      else bad("forbidden");
-      it5.updated_at = new Date().toISOString();
-    } else if (name === "delete_issue") {
-      var w6 = who(a.p_key); if (w6.role !== "admin") bad("forbidden");
-      d.issues = d.issues.filter(function (i) { return !(i.pid === w6.p.id && i.no === a.p_no); });
-    } else if (name === "update_project") {
-      var w7 = who(a.p_key); if (w7.role !== "admin") bad("forbidden");
-      if (a.p_name) w7.p.name = a.p_name; w7.p.site_url = a.p_site_url || "";
-    } else if (name === "create_project") {
-      master(); var np = { id: "p" + rk(), name: a.p_name, site_url: a.p_site_url || "", client_key: rk() + rk(), admin_key: rk() + rk() };
-      d.projects.push(np); out = { id: np.id, client_key: np.client_key, admin_key: np.admin_key };
-    } else if (name === "list_projects") {
-      master();
-      out = clone(d.projects).map(function (p) {
-        var its = d.issues.filter(function (i) { return i.pid === p.id; });
-        p.total = its.length; p.open = its.filter(function (i) { return i.status !== "完了" && i.status !== "保留"; }).length; return p;
-      });
-    } else if (name === "regenerate_keys") {
-      master(); var pp = d.projects.find(function (x) { return x.id === a.p_id; }); if (!pp) bad("not_found");
-      pp.client_key = rk() + rk(); pp.admin_key = rk() + rk(); out = { client_key: pp.client_key, admin_key: pp.admin_key };
-    } else bad("error");
-    save();
-    return Promise.resolve(clone(out));
-  }
-
   /* ============ 状態 ============ */
+  /* 書いた本人だけが編集・削除できるようにするための「合言葉」。このブラウザにだけ保存されます。 */
+  var memToken = "";
+  function authorToken() {
+    var t = lsGet("rs-author");
+    if (!/^[0-9a-f]{32}$/.test(t)) {
+      t = memToken;
+      if (!t) { var a = new Uint8Array(16); crypto.getRandomValues(a); t = Array.prototype.map.call(a, function (x) { return ("0" + x.toString(16)).slice(-2); }).join(""); memToken = t; }
+      lsSet("rs-author", t);
+    }
+    return t;
+  }
   var S = { key: null, proj: null, issues: [], cur: null };
   var view = { status: "all", cat: "all", q: "" };
-  var confirmDel = false, delTimer = null, mkey = "";
+  var confirmDel = false, delTimer = null, mkey = "", delRow = null, delRowTimer = null, editC = null, confirmC = null, cTimer = null;
 
   async function shrink(bmp) {
     var sc = Math.min(1, 1200 / Math.max(bmp.width, bmp.height)), q = 0.72, out = "";
@@ -549,7 +497,8 @@
     form.addEventListener("dragover", function (e) { e.preventDefault(); form.classList.add("drag"); });
     form.addEventListener("dragleave", function (e) { if (e.target === form) form.classList.remove("drag"); });
     form.addEventListener("drop", function (e) { e.preventDefault(); form.classList.remove("drag"); add(e.dataTransfer && e.dataTransfer.files); });
-    return { get: function () { return list.slice(); }, clear: function () { list = []; marked = []; render(); } };
+    return { get: function () { return list.slice(); }, clear: function () { list = []; marked = []; render(); },
+      set: function (arr) { list = (arr || []).slice(); marked = list.map(function () { return false; }); render(); } };
   }
   /* ---- 画像への書き込み ---- */
   var ann = { ops: [], tool: "rect", color: "#e11d48", base: null, cur: null, done: null };
@@ -623,12 +572,13 @@
     $("#annDlg").close(); if (ann.done) ann.done(out);
   });
 
-  var nAtt = Attach("n", "#newForm", "#nErr"), cAtt = Attach("c", "#cForm", "#cErr");
+  var nAtt = Attach("n", "#newForm", "#nErr"), cAtt = Attach("c", "#cForm", "#cErr"), eAtt = Attach("e", "#eForm", "#eErr");
 
   /* ============ 画面の切り替え ============ */
   function show(id) {
     ["homeView", "masterView", "listView", "issueView"].forEach(function (v) { $("#" + v).hidden = v !== id; });
     var b = $("#roleBadge");
+    $("#brandLink").href = (S.key && S.proj && (id === "listView" || id === "issueView")) ? "#/p/" + encodeURIComponent(S.key) : "#/";
     if (id === "listView" || id === "issueView") { b.textContent = ROLE_LABEL[S.proj.role]; b.dataset.r = S.proj.role; b.hidden = false; }
     else b.hidden = true;
     window.scrollTo(0, 0);
@@ -643,7 +593,6 @@
   function showHome(msg) {
     show("homeView");
     document.title = "修正依頼シート";
-    $("#demoBox").hidden = !DEMO;
     var e = $("#hErr"); e.textContent = msg || ""; e.hidden = !msg;
   }
   $("#hForm").addEventListener("submit", function (e) {
@@ -656,11 +605,11 @@
 
   /* ---- 案件（一覧） ---- */
   async function loadProject(key) {
-    var r = await Promise.all([rpc("get_project", { p_key: key }), rpc("list_issues", { p_key: key })]);
+    var r = await Promise.all([rpc("get_project", { p_key: key }), rpc("list_issues", { p_key: key, p_token: authorToken() })]);
     S.key = key; S.proj = r[0]; S.issues = r[1];
   }
   async function refreshList() {
-    try { S.issues = await rpc("list_issues", { p_key: S.key }); renderList(); } catch (e) {}
+    try { S.issues = await rpc("list_issues", { p_key: S.key, p_token: authorToken() }); renderList(); } catch (e) {}
   }
   function renderProject() {
     var p = S.proj;
@@ -671,7 +620,9 @@
     $("#editProj").hidden = !isAdmin();
   }
   function renderList() {
-    var all = S.issues, counts = { all: all.length };
+    var all = S.issues;
+    $("#listView").classList.toggle("adm", isAdmin() || all.some(function (i) { return i.mine; }));
+    var counts = { all: all.length };
     STATUSES.forEach(function (s) { counts[s] = all.filter(function (i) { return i.status === s; }).length; });
     $("#chips").innerHTML = ["all"].concat(STATUSES).map(function (s) {
       return '<button type="button" class="chip" data-status="' + s + '" aria-pressed="' + (view.status === s) + '">' + (s === "all" ? "すべて" : s) + '<span class="n">' + counts[s] + "</span></button>";
@@ -689,18 +640,29 @@
       if (i.page_url) sub.push(i.page_url);
       if (i.image_count) sub.push("画像 " + i.image_count);
       if (i.comment_count) sub.push("コメント " + i.comment_count);
-      return '<button type="button" class="row-i" data-no="' + i.no + '"><span class="c-no mono">#' + i.no + "</span>" +
+      return '<div class="rw"><button type="button" class="row-i" data-no="' + i.no + '"><span class="c-no mono">#' + i.no + "</span>" +
         '<span class="c-main"><span class="ttl">' + esc(i.title) + '</span>' + (sub.length ? '<span class="sub">' + esc(sub.join(" ・ ")) + "</span>" : "") + "</span>" +
         '<span class="prio" data-p="' + esc(i.priority) + '">' + esc(i.priority) + "</span>" +
         '<span class="pill" data-s="' + esc(i.status) + '">' + esc(i.status) + "</span>" +
-        '<span class="c-when mono">' + esc(i.reporter || "―") + "<br>" + fmt(i.updated_at) + "</span></button>";
+        '<span class="c-when mono">' + esc(i.reporter || "―") + "<br>" + fmt(i.updated_at) + "</span></button>" +
+        ((isAdmin() || i.mine) ? '<button type="button" class="linkbtn danger rdel' + (delRow === i.no ? " confirm" : "") + '" data-del="' + i.no + '">' + (delRow === i.no ? "本当に削除" : "削除") + "</button>" : "") + "</div>";
     }).join("");
   }
   function showList() { show("listView"); renderProject(); renderList(); refreshList(); }
 
   $("#chips").addEventListener("click", function (e) { var b = e.target.closest(".chip"); if (b) { view.status = b.dataset.status; renderList(); } });
   $("#q").addEventListener("input", function () { view.q = $("#q").value.trim(); renderList(); });
-  $("#rows").addEventListener("click", function (e) { var r = e.target.closest(".row-i"); if (r) location.hash = "#/p/" + encodeURIComponent(S.key) + "/" + r.dataset.no; });
+  $("#rows").addEventListener("click", async function (e) {
+    var d = e.target.closest("[data-del]");
+    if (d) {
+      var no = parseInt(d.dataset.del, 10);
+      if (delRow !== no) { delRow = no; clearTimeout(delRowTimer); delRowTimer = setTimeout(function () { delRow = null; renderList(); }, 4000); renderList(); return; }
+      clearTimeout(delRowTimer); delRow = null;
+      try { await rpc("delete_issue", { p_key: S.key, p_no: no, p_token: authorToken() }); S.issues = await rpc("list_issues", { p_key: S.key, p_token: authorToken() }); }
+      catch (ex) { alert(errMsg(ex)); }
+      renderList(); return;
+    }
+    var r = e.target.closest(".row-i"); if (r) location.hash = "#/p/" + encodeURIComponent(S.key) + "/" + r.dataset.no; });
 
   /* 案件情報の編集（制作チームのみ） */
   $("#editProj").addEventListener("click", function () { $("#fpName").value = S.proj.name || ""; $("#fpUrl").value = S.proj.site_url || ""; $("#projForm").hidden = false; $("#fpName").focus(); });
@@ -736,7 +698,7 @@
     btn.disabled = true;
     try {
       var no = await rpc("add_issue", { p_key: S.key, p_title: detail ? auto.title : "画像での修正依頼", p_page_url: $("#nPage").value.trim(), p_detail: detail,
-        p_category: "その他", p_priority: auto.priority, p_reporter: name, p_images: imgs });
+        p_category: "その他", p_priority: auto.priority, p_reporter: name, p_images: imgs, p_token: authorToken() });
       $("#nPage").value = ""; $("#nDetail").value = ""; $("#nAuto").hidden = true; nAtt.clear(); $("#newForm").hidden = true;
       location.hash = "#/p/" + encodeURIComponent(S.key) + "/" + no;
     } catch (ex) { err.textContent = errMsg(ex); err.hidden = false; }
@@ -759,33 +721,39 @@
       "<dt>報告者</dt><dd>" + esc(i.reporter || "―") + "</dd><dt>依頼日</dt><dd class='mono'>" + fmtFull(i.created_at) + "</dd>" +
       "<dt>担当</dt><dd>" + esc(i.assignee || "未定") + "</dd></dl>" +
       (i.detail ? '<div class="detail">' + esc(i.detail) + "</div>" : "") + gal(i.images);
+    if (i.mine) {
+      h += '<div class="acts" style="margin-block:4px 12px"><button type="button" class="ghost" data-act="editIssue">編集</button>' +
+        (isAdmin() ? "" : '<button type="button" class="linkbtn danger' + (confirmDel ? " confirm" : "") + '" data-act="del">' + (confirmDel ? "本当に削除" : "削除") + "</button>") + "</div>";
+    }
     if (isAdmin()) {
       h += '<div class="ctrl"><div class="field" style="flex:1 1 100%"><label for="sTitle">題名（自動で付いたものを直せます）</label><input type="text" id="sTitle" data-field="title" value="' + esc(i.title) + '" maxlength="120"></div>' +
         '<div class="field"><label for="sStatus">状態</label><select id="sStatus" data-field="status">' + opts(STATUSES, i.status) + "</select></div>" +
         '<div class="field"><label for="sPrio">優先度</label><select id="sPrio" data-field="priority">' + opts(["高", "中", "低"], i.priority) + "</select></div>" +
         '<div class="field"><label for="sAssign">担当</label><input type="text" id="sAssign" data-field="assignee" value="' + esc(i.assignee) + '" maxlength="40" style="width:9em"></div>' +
         '<div class="acts"><button type="button" class="linkbtn danger' + (confirmDel ? " confirm" : "") + '" data-act="del">' + (confirmDel ? "本当に削除" : "この依頼を削除") + "</button></div></div>";
-    } else if (i.status === "確認待ち") {
-      h += '<div class="ctrl"><span>制作チームから修正の確認依頼が来ています。</span><div class="acts">' +
-        '<button type="button" class="primary" data-act="ok">修正を確認しました（完了）</button>' +
-        '<button type="button" class="ghost" data-act="ng">まだ直っていません（差し戻し）</button></div></div>';
     }
     h += '<span class="label">やりとり</span><ol class="comments">' +
       (i.comments.length ? i.comments.map(function (c) {
+        var acts = "";
+        if (c.mine && editC !== c.id) acts += '<button type="button" class="linkbtn" data-act="editC" data-id="' + c.id + '">編集</button>';
+        if ((c.mine || isAdmin()) && editC !== c.id) acts += '<button type="button" class="linkbtn danger' + (confirmC === c.id ? " confirm" : "") + '" data-act="delC" data-id="' + c.id + '">' + (confirmC === c.id ? "本当に削除" : "削除") + "</button>";
+        var body = editC === c.id
+          ? '<div class="cedit"><textarea id="ecBody" maxlength="2000">' + esc(c.body) + '</textarea><div class="acts" style="margin-top:6px"><button type="button" class="ghost" data-act="saveC" data-id="' + c.id + '">保存</button><button type="button" class="linkbtn" data-act="cancelC">キャンセル</button></div></div>'
+          : (c.body ? '<div class="cbody">' + esc(c.body) + "</div>" : "");
         return '<li><div class="chead"><span class="cname">' + esc(c.author || "名無しさん") + '</span><span class="badge" data-r="' + esc(c.role) + '">' + esc(ROLE_LABEL[c.role] || "") +
-          '</span><span class="mono">' + fmt(c.created_at) + '</span></div>' + (c.body ? '<div class="cbody">' + esc(c.body) + "</div>" : "") + gal(c.images) + "</li>";
+          '</span><span class="mono">' + fmt(c.created_at) + '</span>' + (acts ? '<span class="cact">' + acts + "</span>" : "") + '</div>' + body + gal(c.images) + "</li>";
       }).join("") : '<li class="hint">まだコメントはありません。</li>') + "</ol>";
     $("#issueBox").innerHTML = h;
     document.title = "#" + i.no + " " + i.title + " | 修正依頼シート";
   }
   async function showIssue(no) {
-    confirmDel = false; $("#iErr").hidden = true;
+    confirmDel = false; editC = null; confirmC = null; $("#iErr").hidden = true; $("#eForm").hidden = true;
     show("issueView");
     $("#issueBox").innerHTML = '<p class="skeleton mono">読み込み中…</p>';
-    try { S.cur = await rpc("get_issue", { p_key: S.key, p_no: no }); renderIssue(); }
+    try { S.cur = await rpc("get_issue", { p_key: S.key, p_no: no, p_token: authorToken() }); renderIssue(); }
     catch (e) { location.hash = "#/p/" + encodeURIComponent(S.key); }
   }
-  async function reloadIssue() { S.cur = await rpc("get_issue", { p_key: S.key, p_no: S.cur.no }); renderIssue(); }
+  async function reloadIssue() { S.cur = await rpc("get_issue", { p_key: S.key, p_no: S.cur.no, p_token: authorToken() }); renderIssue(); }
   function iErr(e) { var el = $("#iErr"); el.textContent = errMsg(e); el.hidden = false; }
   var authorName = function () { return lsGet("shuusei-name"); };
 
@@ -800,18 +768,40 @@
     var no = S.cur.no, act = b.dataset.act;
     $("#iErr").hidden = true;
     try {
-      if (act === "ok" || act === "ng") {
+      if (act === "editIssue") {
+        $("#eDetail").value = S.cur.detail || ""; $("#ePage").value = S.cur.page_url || ""; eAtt.set(S.cur.images || []);
+        $("#eErr").hidden = true; $("#eForm").hidden = false; $("#eDetail").focus(); window.scrollTo(0, 0);
+      } else if (act === "editC") { editC = parseInt(b.dataset.id, 10); confirmC = null; renderIssue(); var t = $("#ecBody"); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }
+      else if (act === "cancelC") { editC = null; renderIssue(); }
+      else if (act === "saveC") {
         b.disabled = true;
-        await rpc("update_issue", { p_key: S.key, p_no: no, p_patch: { status: act === "ok" ? "完了" : "未対応" } });
-        await rpc("add_comment", { p_key: S.key, p_no: no, p_author: authorName() || "クライアント", p_body: act === "ok" ? "修正を確認しました。完了とします。" : "まだ直っていないため、差し戻します。", p_images: [] });
-        await reloadIssue();
+        await rpc("edit_comment", { p_key: S.key, p_comment_id: parseInt(b.dataset.id, 10), p_token: authorToken(), p_body: $("#ecBody").value.trim(), p_images: null });
+        editC = null; await reloadIssue();
+      } else if (act === "delC") {
+        var cid = parseInt(b.dataset.id, 10);
+        if (confirmC !== cid) { confirmC = cid; clearTimeout(cTimer); cTimer = setTimeout(function () { confirmC = null; if (S.cur && !$("#issueView").hidden) renderIssue(); }, 4000); renderIssue(); return; }
+        clearTimeout(cTimer); confirmC = null;
+        await rpc("delete_comment", { p_key: S.key, p_comment_id: cid, p_token: authorToken() }); await reloadIssue();
       } else if (act === "del") {
         if (!confirmDel) { confirmDel = true; clearTimeout(delTimer); delTimer = setTimeout(function () { confirmDel = false; if (S.cur && !$("#issueView").hidden) renderIssue(); }, 4000); renderIssue(); return; }
         clearTimeout(delTimer); confirmDel = false;
-        await rpc("delete_issue", { p_key: S.key, p_no: no });
+        await rpc("delete_issue", { p_key: S.key, p_no: no, p_token: authorToken() });
         location.hash = "#/p/" + encodeURIComponent(S.key);
       }
     } catch (ex) { iErr(ex); try { await reloadIssue(); } catch (e2) {} }
+  });
+  $("#eCancel").addEventListener("click", function () { $("#eForm").hidden = true; });
+  $("#eForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var detail = $("#eDetail").value.trim(), imgs = eAtt.get(), err = $("#eErr");
+    if (!detail && !imgs.length) { err.textContent = "コメント内容を入力してください（画像だけでも保存できます）。"; err.hidden = false; return; }
+    err.hidden = true;
+    var btn = e.submitter || $("#eForm button[type=submit]"); btn.disabled = true;
+    try {
+      await rpc("edit_issue", { p_key: S.key, p_no: S.cur.no, p_token: authorToken(), p_title: detail ? autoFill(detail).title : "画像での修正依頼", p_detail: detail, p_page_url: $("#ePage").value.trim(), p_images: imgs });
+      $("#eForm").hidden = true; await reloadIssue();
+    } catch (ex) { err.textContent = errMsg(ex); err.hidden = false; }
+    finally { btn.disabled = false; }
   });
   $("#cForm").addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -821,7 +811,7 @@
     var name = $("#cName").value.trim(); lsSet("shuusei-name", name);
     var btn = e.submitter || $("#cForm button[type=submit]"); btn.disabled = true;
     try {
-      await rpc("add_comment", { p_key: S.key, p_no: S.cur.no, p_author: name, p_body: body, p_images: imgs });
+      await rpc("add_comment", { p_key: S.key, p_no: S.cur.no, p_author: name, p_body: body, p_images: imgs, p_token: authorToken() });
       $("#cBody").value = ""; cAtt.clear(); await reloadIssue();
     } catch (ex) { err.textContent = errMsg(ex); err.hidden = false; }
     finally { btn.disabled = false; }
@@ -913,10 +903,6 @@
     if (!$("#listView").hidden && !document.hidden && $("#newForm").hidden && S.key) refreshList();
   }, 30000);
 
-  if (DEMO) {
-    $("#demoNote").textContent = CFG.url ? "デモモードです。Supabase の公開キーが未設定のため、入力内容はこのブラウザにだけ保存されます。" : "デモモードです。";
-    $("#demoNote").hidden = false;
-  }
   route();
 })();
 </script>

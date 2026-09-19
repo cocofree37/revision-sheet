@@ -60,6 +60,10 @@ create table if not exists public.app_config (
   v text not null
 );
 
+-- 書いた本人だけが編集・削除できるようにするための、本人確認用のハッシュ（合言葉そのものは保存しない）
+alter table public.issues   add column if not exists owner_hash text;
+alter table public.comments add column if not exists owner_hash text;
+
 create index if not exists comments_issue_idx on public.comments(issue_id);
 
 -- ---------------------------------------------------------------- アクセス制限
@@ -131,6 +135,14 @@ begin
   return r;
 end $$;
 
+-- 本人確認の合言葉（ブラウザが持つランダム文字列）を、保存用のハッシュに変換する
+create or replace function public._hash(p text)
+returns text
+language sql immutable set search_path = public, pg_temp as $$
+  select case when p is null or length(p) < 16 then null
+              else encode(sha256(convert_to(p, 'utf8')), 'hex') end;
+$$;
+
 -- ---------------------------------------------------------------- 案件キーで使う関数
 create or replace function public.get_project(p_key text)
 returns jsonb
@@ -144,10 +156,17 @@ begin
   return r;
 end $$;
 
-create or replace function public.list_issues(p_key text)
+-- 引数を増やした関数は別の関数として作られるため、古い版は先に削除する
+drop function if exists public.list_issues(text);
+drop function if exists public.get_issue(text, int);
+drop function if exists public.add_issue(text, text, text, text, text, text, text, jsonb);
+drop function if exists public.add_comment(text, int, text, text, jsonb);
+drop function if exists public.delete_issue(text, int);
+
+create or replace function public.list_issues(p_key text, p_token text default null)
 returns jsonb
 language plpgsql stable security definer set search_path = public, pg_temp as $$
-declare w record;
+declare w record; h text := _hash(p_token);
 begin
   select * into w from _who(p_key);
   if not found then raise exception 'invalid_key'; end if;
@@ -158,33 +177,38 @@ begin
       'reporter', i.reporter, 'assignee', i.assignee,
       'created_at', i.created_at, 'updated_at', i.updated_at,
       'comment_count', (select count(*) from comments c where c.issue_id = i.id),
-      'image_count', jsonb_array_length(i.images)
+      'image_count', jsonb_array_length(i.images),
+      'mine', (h is not null and i.owner_hash is not distinct from h)
     ) order by i.no desc)
     from issues i where i.project_id = w.project_id
   ), '[]'::jsonb);
 end $$;
 
-create or replace function public.get_issue(p_key text, p_no int)
+create or replace function public.get_issue(p_key text, p_no int, p_token text default null)
 returns jsonb
 language plpgsql stable security definer set search_path = public, pg_temp as $$
-declare w record; i issues%rowtype;
+declare w record; i issues%rowtype; h text := _hash(p_token);
 begin
   select * into w from _who(p_key);
   if not found then raise exception 'invalid_key'; end if;
   select * into i from issues where project_id = w.project_id and no = p_no;
   if not found then raise exception 'not_found'; end if;
-  return (to_jsonb(i) - 'id' - 'project_id')
-    || jsonb_build_object('comments', coalesce((
-         select jsonb_agg(jsonb_build_object(
-           'id', c.id, 'author', c.author, 'role', c.role, 'body', c.body,
-           'images', c.images, 'created_at', c.created_at) order by c.id)
-         from comments c where c.issue_id = i.id
-       ), '[]'::jsonb));
+  return (to_jsonb(i) - 'id' - 'project_id' - 'owner_hash')
+    || jsonb_build_object(
+         'mine', (h is not null and i.owner_hash is not distinct from h),
+         'comments', coalesce((
+           select jsonb_agg(jsonb_build_object(
+             'id', c.id, 'author', c.author, 'role', c.role, 'body', c.body,
+             'images', c.images, 'created_at', c.created_at,
+             'mine', (h is not null and c.owner_hash is not distinct from h)) order by c.id)
+           from comments c where c.issue_id = i.id
+         ), '[]'::jsonb));
 end $$;
 
 create or replace function public.add_issue(
   p_key text, p_title text, p_page_url text, p_detail text,
-  p_category text, p_priority text, p_reporter text, p_images jsonb)
+  p_category text, p_priority text, p_reporter text, p_images jsonb,
+  p_token text default null)
 returns int
 language plpgsql security definer set search_path = public, pg_temp as $$
 declare w record; n int; imgs jsonb; t text;
@@ -200,14 +224,15 @@ begin
   if coalesce(p_priority, '') not in ('高','中','低') then p_priority := '中'; end if;
   perform pg_advisory_xact_lock(hashtext(w.project_id::text));
   select coalesce(max(no), 0) + 1 into n from issues where project_id = w.project_id;
-  insert into issues (project_id, no, title, page_url, detail, category, priority, reporter, images)
+  insert into issues (project_id, no, title, page_url, detail, category, priority, reporter, images, owner_hash)
   values (w.project_id, n, t, left(coalesce(p_page_url, ''), 300), left(coalesce(p_detail, ''), 3000),
-          p_category, p_priority, left(coalesce(p_reporter, ''), 40), imgs);
+          p_category, p_priority, left(coalesce(p_reporter, ''), 40), imgs, _hash(p_token));
   return n;
 end $$;
 
 create or replace function public.add_comment(
-  p_key text, p_no int, p_author text, p_body text, p_images jsonb)
+  p_key text, p_no int, p_author text, p_body text, p_images jsonb,
+  p_token text default null)
 returns void
 language plpgsql security definer set search_path = public, pg_temp as $$
 declare w record; iid bigint; imgs jsonb; b text;
@@ -219,9 +244,87 @@ begin
   imgs := _check_images(p_images);
   b := left(btrim(coalesce(p_body, '')), 2000);
   if b = '' and jsonb_array_length(imgs) = 0 then raise exception 'empty'; end if;
-  insert into comments (issue_id, author, role, body, images)
-  values (iid, left(coalesce(p_author, ''), 40), w.role, b, imgs);
+  insert into comments (issue_id, author, role, body, images, owner_hash)
+  values (iid, left(coalesce(p_author, ''), 40), w.role, b, imgs, _hash(p_token));
   update issues set updated_at = now() where id = iid;
+end $$;
+
+-- 依頼の編集：書いた本人（同じ合言葉）だけ
+create or replace function public.edit_issue(
+  p_key text, p_no int, p_token text,
+  p_title text, p_detail text, p_page_url text, p_images jsonb)
+returns void
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare w record; i issues%rowtype; h text := _hash(p_token); imgs jsonb; d text;
+begin
+  select * into w from _who(p_key);
+  if not found then raise exception 'invalid_key'; end if;
+  select * into i from issues where project_id = w.project_id and no = p_no;
+  if not found then raise exception 'not_found'; end if;
+  if h is null or i.owner_hash is distinct from h then raise exception 'forbidden'; end if;
+  imgs := _check_images(p_images);
+  d := left(btrim(coalesce(p_detail, '')), 3000);
+  if d = '' and jsonb_array_length(imgs) = 0 then raise exception 'empty'; end if;
+  update issues set
+    title = coalesce(nullif(left(btrim(p_title), 120), ''), title),
+    detail = d,
+    page_url = left(coalesce(btrim(p_page_url), ''), 300),
+    images = imgs,
+    updated_at = now()
+  where id = i.id;
+end $$;
+
+-- 依頼の削除：書いた本人、または制作チーム
+create or replace function public.delete_issue(p_key text, p_no int, p_token text default null)
+returns void
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare w record; i issues%rowtype; h text := _hash(p_token);
+begin
+  select * into w from _who(p_key);
+  if not found then raise exception 'invalid_key'; end if;
+  select * into i from issues where project_id = w.project_id and no = p_no;
+  if not found then return; end if;
+  if w.role <> 'admin' and (h is null or i.owner_hash is distinct from h) then
+    raise exception 'forbidden';
+  end if;
+  delete from issues where id = i.id;
+end $$;
+
+-- コメントの編集：書いた本人だけ（画像は p_images を渡さなければそのまま）
+create or replace function public.edit_comment(
+  p_key text, p_comment_id bigint, p_token text, p_body text, p_images jsonb default null)
+returns void
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare w record; c comments%rowtype; h text := _hash(p_token); imgs jsonb; b text;
+begin
+  select * into w from _who(p_key);
+  if not found then raise exception 'invalid_key'; end if;
+  select cm.* into c from comments cm join issues i on i.id = cm.issue_id
+    where cm.id = p_comment_id and i.project_id = w.project_id;
+  if not found then raise exception 'not_found'; end if;
+  if h is null or c.owner_hash is distinct from h then raise exception 'forbidden'; end if;
+  imgs := case when p_images is null or p_images = 'null'::jsonb then c.images else _check_images(p_images) end;
+  b := left(btrim(coalesce(p_body, '')), 2000);
+  if b = '' and jsonb_array_length(imgs) = 0 then raise exception 'empty'; end if;
+  update comments set body = b, images = imgs where id = c.id;
+  update issues set updated_at = now() where id = c.issue_id;
+end $$;
+
+-- コメントの削除：書いた本人、または制作チーム
+create or replace function public.delete_comment(p_key text, p_comment_id bigint, p_token text default null)
+returns void
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare w record; c comments%rowtype; h text := _hash(p_token);
+begin
+  select * into w from _who(p_key);
+  if not found then raise exception 'invalid_key'; end if;
+  select cm.* into c from comments cm join issues i on i.id = cm.issue_id
+    where cm.id = p_comment_id and i.project_id = w.project_id;
+  if not found then return; end if;
+  if w.role <> 'admin' and (h is null or c.owner_hash is distinct from h) then
+    raise exception 'forbidden';
+  end if;
+  delete from comments where id = c.id;
 end $$;
 
 create or replace function public.update_issue(p_key text, p_no int, p_patch jsonb)
@@ -252,17 +355,6 @@ begin
       raise exception 'forbidden';
     end if;
   end if;
-end $$;
-
-create or replace function public.delete_issue(p_key text, p_no int)
-returns void
-language plpgsql security definer set search_path = public, pg_temp as $$
-declare w record;
-begin
-  select * into w from _who(p_key);
-  if not found then raise exception 'invalid_key'; end if;
-  if w.role <> 'admin' then raise exception 'forbidden'; end if;
-  delete from issues where project_id = w.project_id and no = p_no;
 end $$;
 
 create or replace function public.update_project(p_key text, p_name text, p_site_url text)
@@ -328,12 +420,15 @@ revoke execute on all functions in schema public from public, anon, authenticate
 
 grant execute on function
   public.get_project(text),
-  public.list_issues(text),
-  public.get_issue(text, int),
-  public.add_issue(text, text, text, text, text, text, text, jsonb),
-  public.add_comment(text, int, text, text, jsonb),
+  public.list_issues(text, text),
+  public.get_issue(text, int, text),
+  public.add_issue(text, text, text, text, text, text, text, jsonb, text),
+  public.add_comment(text, int, text, text, jsonb, text),
   public.update_issue(text, int, jsonb),
-  public.delete_issue(text, int),
+  public.edit_issue(text, int, text, text, text, text, jsonb),
+  public.delete_issue(text, int, text),
+  public.edit_comment(text, bigint, text, text, jsonb),
+  public.delete_comment(text, bigint, text),
   public.update_project(text, text, text),
   public.create_project(text, text, text),
   public.list_projects(text),
