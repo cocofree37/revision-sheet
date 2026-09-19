@@ -183,33 +183,74 @@
     .grid2 { grid-template-columns: 1fr; }
     .brand { font-size: 19px; }
   }
+  /* --- 案件の管理・バッジ --- */
+  .top-in .badge { font-size: 12px; padding: 1px 12px; }
+  .pcard { border: 1px solid var(--rule); background: var(--surface); border-radius: 3px; padding: 14px 16px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .ph2 { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  .urlrow { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
+  .urlrow input { font-size: 12.5px; padding: 6px 8px; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  .urlrow a.ghost { text-decoration: none; }
+  .skeleton { color: var(--muted); font-size: 13px; padding: 26px 4px; }
+  @media (max-width: 680px) { .urlrow { grid-template-columns: 1fr auto auto; } .urlrow .label { grid-column: 1 / -1; } }
 </style>
 </head>
 <body>
 
 <header class="top">
   <div class="wrap top-in">
-    <h1 class="brand">修正依頼シート</h1>
+    <h1 class="brand"><a href="#/" style="color:inherit;text-decoration:none">修正依頼シート</a></h1>
     <span class="sp"></span>
-    <label class="role">立場
-      <select id="role" aria-label="立場">
-        <option value="client">クライアント</option>
-        <option value="admin">制作チーム</option>
-      </select>
-    </label>
+    <span class="badge" id="roleBadge" hidden></span>
   </div>
 </header>
 
 <main class="wrap">
-  <div class="notice" id="saveWarn" hidden>ブラウザの保存容量がいっぱいで、最新の内容を保存できませんでした。このまま閉じると消える可能性があります。先に「JSONで書き出す」で控えを取り、画像の多い依頼を整理してください。</div>
-  <div class="notice" id="notice">このページのデータは、いま使っているブラウザの中にだけ保存されます。他の人とは共有されません。共有するときは、下の「JSONで書き出す」「CSVで書き出す」を使ってください。</div>
+  <div class="notice" id="demoNote" hidden></div>
+
+  <!-- ホーム -->
+  <section id="homeView" hidden>
+    <h2 class="ititle" style="margin-top:28px">修正依頼シート</h2>
+    <p>制作会社から届いた案件のURLを開いてください。URLまたはキーを、下に貼り付けて開くこともできます。</p>
+    <form class="panel" id="hForm">
+      <div class="field"><label for="hKey">案件のURL または キー</label><input type="text" id="hKey" autocomplete="off" placeholder="https://…/#/p/…"></div>
+      <div class="row"><span class="hint">URLを開いたときに自動で表示される場合は、この操作は不要です</span><button type="submit" class="primary">開く</button></div>
+      <p class="err" id="hErr" hidden></p>
+    </form>
+    <div class="panel" id="demoBox" hidden>
+      <h3>デモ用</h3>
+      <p class="hint" style="margin:0 0 8px">Supabase に未接続のため、サンプルの案件で試せます。</p>
+      <a href="#/p/demo-client">クライアントとして開く</a> ／ <a href="#/p/demo-admin">制作チームとして開く</a> ／ <a href="#/master">案件の管理（キー: demo-master）</a>
+    </div>
+    <p><a href="#/master" class="linkbtn">制作チームの方はこちら（案件の管理）</a></p>
+  </section>
+
+  <!-- 案件の管理 -->
+  <section id="masterView" hidden>
+    <h2 class="ititle" style="margin-top:28px">案件の管理</h2>
+    <form class="panel" id="mForm">
+      <div class="field"><label for="mKey">マスターキー</label><input type="password" id="mKey" autocomplete="off"></div>
+      <div class="row"><span class="hint">制作チームだけが持つキーです。案件の追加と、URLの確認ができます。</span><button type="submit" class="primary">開く</button></div>
+      <p class="err" id="mErr" hidden></p>
+    </form>
+    <div id="mBody" hidden>
+      <form class="panel" id="mNew">
+        <h3>案件を追加</h3>
+        <div class="grid2">
+          <div class="field"><label for="mnName">案件名（サイト名）</label><input type="text" id="mnName" maxlength="80" autocomplete="off"></div>
+          <div class="field"><label for="mnUrl">サイトのURL</label><input type="url" id="mnUrl" maxlength="300" placeholder="https://" autocomplete="off"></div>
+        </div>
+        <div class="row"><span class="hint">追加すると、クライアント用と制作用のURLが発行されます</span><button type="submit" class="ghost">案件を追加</button></div>
+      </form>
+      <div id="mList"></div>
+    </div>
+  </section>
 
   <!-- 一覧 -->
-  <section id="listView">
+  <section id="listView" hidden>
     <div class="proj">
       <h2 id="pName"></h2>
       <a id="pSite" target="_blank" rel="noopener noreferrer" hidden></a>
-      <button type="button" class="linkbtn" id="editProj">案件情報を編集</button>
+      <button type="button" class="linkbtn" id="editProj" hidden>案件情報を編集</button>
     </div>
 
     <form class="panel" id="projForm" hidden>
@@ -252,20 +293,15 @@
     <div class="rows" id="rows"></div>
 
     <div class="foot">
-      <button type="button" class="ghost" id="expJson">JSONで書き出す</button>
       <button type="button" class="ghost" id="expCsv">CSVで書き出す</button>
-      <button type="button" class="ghost" id="impBtn">JSONを読み込む</button>
-      <input type="file" id="impFile" accept="application/json,.json" hidden>
-      <span class="sp" style="flex:1"></span>
-      <button type="button" class="linkbtn danger" id="clearAll">すべて消去</button>
     </div>
-    <p class="err" id="ioMsg" hidden></p>
   </section>
 
   <!-- 詳細 -->
   <section id="issueView" hidden>
     <button type="button" class="back" id="backBtn">← 一覧へ戻る</button>
     <div id="issueBox"></div>
+    <p class="err" id="iErr" hidden></p>
     <form class="panel" id="cForm">
       <h3>コメントを書く</h3>
       <div class="field"><label for="cName">お名前</label><input type="text" id="cName" maxlength="40" autocomplete="off"></div>
@@ -309,10 +345,28 @@
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
+
+  /* ============ 接続設定 ============
+     url     : Supabase の Project URL
+     anonKey : Supabase の公開キー（anon / publishable key）。公開して問題ないキーです。
+               ※ service_role / secret キーは、絶対にここへ書かないでください。
+     anonKey が空のときは、ブラウザ内だけで動くデモモードになります。 */
+  var CFG = { url: "https://oigmsndcrlrpubfcpicn.supabase.co", anonKey: "sb_publishable_MiLXNQsoNCTSWYli0dVB9A_7yMFmxSG" };
+  var DEMO = !CFG.anonKey;
+
   var STATUSES = ["未対応", "対応中", "確認待ち", "完了", "保留"];
   var CATEGORIES = ["デザイン", "文言・テキスト", "画像・写真", "機能・動作", "その他"];
   var ROLE_LABEL = { client: "クライアント", admin: "制作チーム" };
-  var KEY = "shuusei-sheet-v1";
+  var ERRORS = {
+    invalid_key: "このキーは無効です。URLをご確認ください。",
+    forbidden: "この操作はできません。",
+    not_found: "対象が見つかりません。",
+    invalid_images: "画像の形式か大きさが正しくありません。",
+    empty: "内容を入力してください。",
+    invalid: "入力内容を確認してください。",
+    network: "通信できませんでした。ネットワークをご確認ください。"
+  };
+  function errMsg(e) { return ERRORS[e && e.code] || "うまくいきませんでした。時間をおいてもう一度お試しください。"; }
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -320,222 +374,111 @@
     });
   }
   function pad(n) { return String(n).padStart(2, "0"); }
-  function fmt(iso) {
-    var d = new Date(iso);
-    return (d.getMonth() + 1) + "/" + d.getDate() + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
-  }
-  function fmtFull(iso) { var d = new Date(iso); return d.getFullYear() + "/" + fmt(iso); }
+  function fmt(iso) { var d = new Date(iso); return (d.getMonth() + 1) + "/" + d.getDate() + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+  function fmtFull(iso) { return new Date(iso).getFullYear() + "/" + fmt(iso); }
   function isHttp(u) { return /^https?:\/\/\S+$/i.test(u || ""); }
   function safeImg(s) { return typeof s === "string" && /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(s) ? s : ""; }
-
-  /* ================= データ層（あとでDBに差し替える場所） ================= */
-  var store = (function () {
-    var data = null;
-    function iso(minAgo) { return new Date(Date.now() - minAgo * 60000).toISOString(); }
-    function seed() {
-      return {
-        sample: true, nextNo: 5, nextCid: 4,
-        project: { name: "サンプル株式会社 コーポレートサイト", siteUrl: "https://example.com" },
-        issues: [
-          { no: 1, title: "トップページのキャッチコピーを差し替えたい", pageUrl: "https://example.com/", detail: "現在のコピーを「暮らしに、もう少しの余白を。」に変更してください。フォントサイズは今のままで大丈夫です。", category: "文言・テキスト", priority: "高", status: "対応中", reporter: "田中", assignee: "佐藤", images: [], createdAt: iso(3000), updatedAt: iso(200),
-            comments: [{ id: 1, author: "佐藤", role: "admin", body: "承知しました。本日中に反映してテスト環境で確認できるようにします。", at: iso(200) }] },
-          { no: 2, title: "スマホでメニューボタンが押しにくい", pageUrl: "トップ > ヘッダー", detail: "iPhoneで見るとメニューのボタンが小さく、何度か押し直しました。もう少し大きくできますか？", category: "デザイン", priority: "中", status: "確認待ち", reporter: "田中", assignee: "佐藤", images: [], createdAt: iso(2600), updatedAt: iso(90),
-            comments: [{ id: 2, author: "佐藤", role: "admin", body: "ボタンを44px四方に拡大しました。ご確認をお願いします。", at: iso(90) }] },
-          { no: 3, title: "会社概要の代表者写真を新しいものに", pageUrl: "https://example.com/about", detail: "新しい写真を別途メールでお送りします。", category: "画像・写真", priority: "低", status: "未対応", reporter: "鈴木", assignee: "", images: [], createdAt: iso(1500), updatedAt: iso(1500), comments: [] },
-          { no: 4, title: "お問い合わせフォームの送信後にメールが届かない", pageUrl: "https://example.com/contact", detail: "テスト送信をしましたが、自動返信メールが届きませんでした。迷惑メールにも入っていません。", category: "機能・動作", priority: "高", status: "完了", reporter: "田中", assignee: "佐藤", images: [], createdAt: iso(5000), updatedAt: iso(4000),
-            comments: [{ id: 3, author: "田中", role: "client", body: "届くようになりました。ありがとうございます。", at: iso(4000) }] }
-        ]
-      };
-    }
-    function load() {
-      if (data) return data;
-      try { var s = JSON.parse(localStorage.getItem(KEY)); if (s && Array.isArray(s.issues)) { data = migrate(s); return data; } } catch (e) {}
-      data = seed();
-      return data;
-    }
-    function save() {
-      var ok = true;
-      try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { ok = false; }
-      var w = document.getElementById("saveWarn"); if (w) w.hidden = ok;
-    }
-    function migrate(d) {
-      d.issues.forEach(function (i) {
-        if (!Array.isArray(i.images)) i.images = i.image ? [i.image] : [];
-        delete i.image;
-        (i.comments || []).forEach(function (c) { if (!Array.isArray(c.images)) c.images = []; });
-      });
-      return d;
-    }
-    function find(no) { return load().issues.find(function (i) { return i.no === no; }); }
-    return {
-      all: function () { return load(); },
-      project: function () { return load().project; },
-      setProject: function (p) { load().project = p; save(); },
-      issues: function () { return load().issues; },
-      get: find,
-      add: function (v) {
-        var d = load(), now = new Date().toISOString();
-        var i = { no: d.nextNo++, title: v.title, pageUrl: v.pageUrl, detail: v.detail, category: v.category, priority: v.priority,
-          status: "未対応", reporter: v.reporter, assignee: "", images: v.images || [], createdAt: now, updatedAt: now, comments: [] };
-        d.issues.push(i); save(); return i.no;
-      },
-      update: function (no, patch) {
-        var i = find(no); if (!i) return;
-        Object.keys(patch).forEach(function (k) { i[k] = patch[k]; });
-        i.updatedAt = new Date().toISOString(); save();
-      },
-      remove: function (no) { var d = load(); d.issues = d.issues.filter(function (i) { return i.no !== no; }); save(); },
-      comment: function (no, c) {
-        var d = load(), i = find(no); if (!i) return;
-        i.comments.push({ id: d.nextCid++, author: c.author, role: c.role, body: c.body, images: c.images || [], at: new Date().toISOString() });
-        i.updatedAt = new Date().toISOString(); save();
-      },
-      clearSample: function () { var d = load(); d.sample = false; save(); },
-      replace: function (nd) { data = migrate(nd); save(); },
-      reset: function () { data = { sample: false, nextNo: 1, nextCid: 1, project: { name: "新しい案件", siteUrl: "" }, issues: [] }; save(); }
-    };
-  })();
-
-  /* ================= 端末内の覚え書き ================= */
   function lsGet(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
-  var role = lsGet("shuusei-role") === "admin" ? "admin" : "client";
+  function ssGet(k) { try { return sessionStorage.getItem(k) || ""; } catch (e) { return ""; } }
+  function ssSet(k, v) { try { if (v) sessionStorage.setItem(k, v); else sessionStorage.removeItem(k); } catch (e) {} }
+
+  /* ============ 通信（Supabase の関数を呼ぶ） ============ */
+  async function rpc(name, args) {
+    if (DEMO) return demoRpc(name, args || {});
+    var h = { "Content-Type": "application/json", apikey: CFG.anonKey };
+    if (/^eyJ/.test(CFG.anonKey)) h.Authorization = "Bearer " + CFG.anonKey;
+    var r;
+    try { r = await fetch(CFG.url.replace(/\/$/, "") + "/rest/v1/rpc/" + name, { method: "POST", headers: h, body: JSON.stringify(args || {}) }); }
+    catch (e) { throw { code: "network" }; }
+    var t = await r.text(), j = null;
+    try { j = t ? JSON.parse(t) : null; } catch (e) {}
+    if (!r.ok) throw { code: (j && j.message) || "error" };
+    return j;
+  }
+
+  /* ============ デモ用のデータ（Supabase 未接続のとき、ブラウザ内だけで動く） ============ */
+  var demo = null;
+  function demoRpc(name, a) {
+    function iso(m) { return new Date(Date.now() - m * 60000).toISOString(); }
+    function rk() { return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2); }
+    function load() {
+      if (demo) return demo;
+      try { var s = JSON.parse(localStorage.getItem("revision-sheet-demo-v1")); if (s && s.projects) { demo = s; return demo; } } catch (e) {}
+      demo = { nextCid: 4, projects: [{ id: "p1", name: "サンプル株式会社 コーポレートサイト", site_url: "https://example.com", client_key: "demo-client", admin_key: "demo-admin" }],
+        issues: [
+          { pid: "p1", no: 1, title: "トップページのキャッチコピーを差し替え", page_url: "https://example.com/", detail: "現在のコピーを「暮らしに、もう少しの余白を。」に変更してください。", category: "文言・テキスト", priority: "高", status: "対応中", reporter: "田中", assignee: "佐藤", images: [], created_at: iso(3000), updated_at: iso(200), comments: [{ id: 1, author: "佐藤", role: "admin", body: "承知しました。本日中に反映します。", images: [], created_at: iso(200) }] },
+          { pid: "p1", no: 2, title: "スマホでメニューボタンが押しにくい", page_url: "トップ > ヘッダー", detail: "iPhoneでメニューのボタンが小さく、何度か押し直しました。", category: "デザイン", priority: "中", status: "確認待ち", reporter: "田中", assignee: "佐藤", images: [], created_at: iso(2600), updated_at: iso(90), comments: [{ id: 2, author: "佐藤", role: "admin", body: "ボタンを44px四方に拡大しました。ご確認をお願いします。", images: [], created_at: iso(90) }] },
+          { pid: "p1", no: 3, title: "会社概要の代表者写真を新しいものに", page_url: "https://example.com/about", detail: "新しい写真を別途メールでお送りします。", category: "画像・写真", priority: "低", status: "未対応", reporter: "鈴木", assignee: "", images: [], created_at: iso(1500), updated_at: iso(1500), comments: [] }
+        ] };
+      return demo;
+    }
+    function save() { try { localStorage.setItem("revision-sheet-demo-v1", JSON.stringify(demo)); } catch (e) {} }
+    var d = load();
+    function bad(c) { throw { code: c }; }
+    function who(key) {
+      var p = d.projects.find(function (x) { return x.admin_key === key; });
+      if (p) return { p: p, role: "admin" };
+      p = d.projects.find(function (x) { return x.client_key === key; });
+      if (p) return { p: p, role: "client" };
+      bad("invalid_key");
+    }
+    function master() { if (a.p_master !== "demo-master") bad("forbidden"); }
+    function clone(x) { return JSON.parse(JSON.stringify(x)); }
+    var out = null;
+    if (name === "get_project") { var w = who(a.p_key); out = { name: w.p.name, site_url: w.p.site_url, role: w.role }; }
+    else if (name === "list_issues") {
+      var w1 = who(a.p_key);
+      out = d.issues.filter(function (i) { return i.pid === w1.p.id; }).sort(function (x, y) { return y.no - x.no; }).map(function (i) {
+        return { no: i.no, title: i.title, page_url: i.page_url, category: i.category, priority: i.priority, status: i.status, reporter: i.reporter, assignee: i.assignee, created_at: i.created_at, updated_at: i.updated_at, comment_count: i.comments.length, image_count: i.images.length };
+      });
+    } else if (name === "get_issue") {
+      var w2 = who(a.p_key), it = d.issues.find(function (i) { return i.pid === w2.p.id && i.no === a.p_no; });
+      if (!it) bad("not_found"); out = clone(it); delete out.pid;
+    } else if (name === "add_issue") {
+      var w3 = who(a.p_key), n = d.issues.filter(function (i) { return i.pid === w3.p.id; }).reduce(function (m, i) { return Math.max(m, i.no); }, 0) + 1;
+      d.issues.push({ pid: w3.p.id, no: n, title: (a.p_title || "（内容を確認）").slice(0, 120), page_url: a.p_page_url || "", detail: a.p_detail || "", category: CATEGORIES.indexOf(a.p_category) >= 0 ? a.p_category : "その他", priority: a.p_priority || "中", status: "未対応", reporter: a.p_reporter || "", assignee: "", images: a.p_images || [], created_at: new Date().toISOString(), updated_at: new Date().toISOString(), comments: [] });
+      out = n;
+    } else if (name === "add_comment") {
+      var w4 = who(a.p_key), it4 = d.issues.find(function (i) { return i.pid === w4.p.id && i.no === a.p_no; });
+      if (!it4) bad("not_found"); if (!(a.p_body || "").trim() && !(a.p_images || []).length) bad("empty");
+      it4.comments.push({ id: d.nextCid++, author: a.p_author || "", role: w4.role, body: a.p_body || "", images: a.p_images || [], created_at: new Date().toISOString() });
+      it4.updated_at = new Date().toISOString();
+    } else if (name === "update_issue") {
+      var w5 = who(a.p_key), it5 = d.issues.find(function (i) { return i.pid === w5.p.id && i.no === a.p_no; });
+      if (!it5) bad("not_found");
+      if (w5.role === "admin") { ["title", "status", "priority", "category", "assignee"].forEach(function (k) { if (a.p_patch[k] != null && !(k === "title" && !a.p_patch[k])) it5[k] = a.p_patch[k]; }); }
+      else if (it5.status === "確認待ち" && Object.keys(a.p_patch).length === 1 && ["完了", "未対応"].indexOf(a.p_patch.status) >= 0) it5.status = a.p_patch.status;
+      else bad("forbidden");
+      it5.updated_at = new Date().toISOString();
+    } else if (name === "delete_issue") {
+      var w6 = who(a.p_key); if (w6.role !== "admin") bad("forbidden");
+      d.issues = d.issues.filter(function (i) { return !(i.pid === w6.p.id && i.no === a.p_no); });
+    } else if (name === "update_project") {
+      var w7 = who(a.p_key); if (w7.role !== "admin") bad("forbidden");
+      if (a.p_name) w7.p.name = a.p_name; w7.p.site_url = a.p_site_url || "";
+    } else if (name === "create_project") {
+      master(); var np = { id: "p" + rk(), name: a.p_name, site_url: a.p_site_url || "", client_key: rk() + rk(), admin_key: rk() + rk() };
+      d.projects.push(np); out = { id: np.id, client_key: np.client_key, admin_key: np.admin_key };
+    } else if (name === "list_projects") {
+      master();
+      out = clone(d.projects).map(function (p) {
+        var its = d.issues.filter(function (i) { return i.pid === p.id; });
+        p.total = its.length; p.open = its.filter(function (i) { return i.status !== "完了" && i.status !== "保留"; }).length; return p;
+      });
+    } else if (name === "regenerate_keys") {
+      master(); var pp = d.projects.find(function (x) { return x.id === a.p_id; }); if (!pp) bad("not_found");
+      pp.client_key = rk() + rk(); pp.admin_key = rk() + rk(); out = { client_key: pp.client_key, admin_key: pp.admin_key };
+    } else bad("error");
+    save();
+    return Promise.resolve(clone(out));
+  }
+
+  /* ============ 状態 ============ */
+  var S = { key: null, proj: null, issues: [], cur: null };
   var view = { status: "all", cat: "all", q: "" };
-  var confirmDel = false, delTimer = null;
+  var confirmDel = false, delTimer = null, mkey = "";
 
-  /* ================= 一覧 ================= */
-  function renderProject() {
-    var p = store.project();
-    $("#pName").textContent = p.name || "（案件名なし）";
-    document.title = (p.name ? p.name + " | " : "") + "修正依頼シート";
-    var a = $("#pSite");
-    if (isHttp(p.siteUrl)) { a.href = p.siteUrl; a.textContent = "サイトを開く ↗"; a.hidden = false; } else { a.hidden = true; }
-  }
-
-  function renderList() {
-    var all = store.issues();
-    var counts = { all: all.length };
-    STATUSES.forEach(function (s) { counts[s] = all.filter(function (i) { return i.status === s; }).length; });
-    var h = "";
-    ["all"].concat(STATUSES).forEach(function (s) {
-      h += '<button type="button" class="chip" data-status="' + s + '" aria-pressed="' + (view.status === s) + '">' +
-        (s === "all" ? "すべて" : s) + '<span class="n">' + counts[s] + "</span></button>";
-    });
-    $("#chips").innerHTML = h;
-
-    var q = view.q.toLowerCase();
-    var list = all.filter(function (i) {
-      if (view.status !== "all" && i.status !== view.status) return false;
-      if (view.cat !== "all" && i.category !== view.cat) return false;
-      if (q && (i.title + " " + i.pageUrl + " " + i.reporter + " " + i.detail).toLowerCase().indexOf(q) < 0) return false;
-      return true;
-    }).sort(function (a, b) { return b.no - a.no; });
-
-    if (!all.length) { $("#rows").innerHTML = '<p class="empty">まだ修正依頼はありません。「＋ 修正を依頼する」から追加してください。</p>'; return; }
-    if (!list.length) { $("#rows").innerHTML = '<p class="empty">条件に合う依頼はありません。</p>'; return; }
-    $("#rows").innerHTML = list.map(function (i) {
-      var sub = [i.category];
-      if (i.pageUrl) sub.push(i.pageUrl);
-      if (i.images.length) sub.push("画像 " + i.images.length);
-      if (i.comments.length) sub.push("コメント " + i.comments.length);
-      return '<button type="button" class="row-i" data-no="' + i.no + '">' +
-        '<span class="c-no mono">#' + i.no + "</span>" +
-        '<span class="c-main"><span class="ttl">' + esc(i.title) + '</span><span class="sub">' + esc(sub.join(" ・ ")) + "</span></span>" +
-        '<span class="prio" data-p="' + esc(i.priority) + '">' + esc(i.priority) + "</span>" +
-        '<span class="pill" data-s="' + esc(i.status) + '">' + esc(i.status) + "</span>" +
-        '<span class="c-when mono">' + esc(i.reporter || "―") + "<br>" + fmt(i.updatedAt) + "</span></button>";
-    }).join("");
-  }
-
-  /* ================= 詳細 ================= */
-  function opts(list, cur) {
-    return list.map(function (v) { return "<option" + (v === cur ? " selected" : "") + ">" + esc(v) + "</option>"; }).join("");
-  }
-  function gal(list) {
-    var imgs = (list || []).map(safeImg).filter(Boolean);
-    return imgs.length ? '<div class="gal">' + imgs.map(function (s, n) { return '<img class="gimg" alt="添付画像 ' + (n + 1) + '（クリックで拡大）" src="' + s + '">'; }).join("") + "</div>" : "";
-  }
-  document.addEventListener("click", function (e) { if (e.target.classList && e.target.classList.contains("gimg")) e.target.classList.toggle("big"); });
-  function renderIssue(no) {
-    var i = store.get(no);
-    if (!i) { location.hash = "#/"; return; }
-    var h = '<div class="ihead"><span class="mono c-no">#' + i.no + '</span><span class="pill" data-s="' + esc(i.status) + '">' + esc(i.status) + "</span></div>" +
-      '<h2 class="ititle">' + esc(i.title) + "</h2>" +
-      '<dl class="facts"><dt>分類</dt><dd>' + esc(i.category) + "</dd><dt>優先度</dt><dd>" + esc(i.priority) + "</dd>" +
-      "<dt>対象</dt><dd>" + (isHttp(i.pageUrl) ? '<a href="' + esc(i.pageUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(i.pageUrl) + " ↗</a>" : esc(i.pageUrl || "―")) + "</dd>" +
-      "<dt>報告者</dt><dd>" + esc(i.reporter || "―") + "</dd><dt>依頼日</dt><dd class='mono'>" + fmtFull(i.createdAt) + "</dd>" +
-      "<dt>担当</dt><dd>" + esc(i.assignee || "未定") + "</dd></dl>" +
-      (i.detail ? '<div class="detail">' + esc(i.detail) + "</div>" : "") +
-      gal(i.images);
-
-    if (role === "admin") {
-      h += '<div class="ctrl">' +
-        '<div class="field" style="flex:1 1 100%"><label for="sTitle">題名（自動で付いたものを直せます）</label><input type="text" id="sTitle" data-field="title" value="' + esc(i.title) + '" maxlength="120"></div>' +
-        '<div class="field"><label for="sStatus">状態</label><select id="sStatus" data-field="status">' + opts(STATUSES, i.status) + "</select></div>" +
-        '<div class="field"><label for="sPrio">優先度</label><select id="sPrio" data-field="priority">' + opts(["高", "中", "低"], i.priority) + "</select></div>" +
-        '<div class="field"><label for="sCat">分類</label><select id="sCat" data-field="category">' + opts(CATEGORIES, i.category) + "</select></div>" +
-        '<div class="field"><label for="sAssign">担当</label><input type="text" id="sAssign" data-field="assignee" value="' + esc(i.assignee) + '" maxlength="40" style="width:9em"></div>' +
-        '<div class="acts"><button type="button" class="linkbtn danger' + (confirmDel ? " confirm" : "") + '" data-act="del">' + (confirmDel ? "本当に削除" : "この依頼を削除") + "</button></div></div>";
-    } else if (i.status === "確認待ち") {
-      h += '<div class="ctrl"><span>制作チームから修正の確認依頼が来ています。</span><div class="acts">' +
-        '<button type="button" class="primary" data-act="ok">修正を確認しました（完了）</button>' +
-        '<button type="button" class="ghost" data-act="ng">まだ直っていません（差し戻し）</button></div></div>';
-    }
-
-    h += '<span class="label">やりとり</span><ol class="comments">' +
-      (i.comments.length ? i.comments.map(function (c) {
-        return '<li><div class="chead"><span class="cname">' + esc(c.author || "名無しさん") + '</span><span class="badge" data-r="' + esc(c.role) + '">' +
-          esc(ROLE_LABEL[c.role] || "") + '</span><span class="mono">' + fmt(c.at) + '</span></div><div class="cbody">' + esc(c.body) + "</div>" + gal(c.images) + "</li>";
-      }).join("") : '<li class="hint">まだコメントはありません。</li>') + "</ol>";
-    $("#issueBox").innerHTML = h;
-  }
-
-  /* ================= 画面切り替え ================= */
-  function route() {
-    var m = location.hash.match(/^#\/i\/(\d+)$/);
-    if (m) {
-      confirmDel = false;
-      $("#listView").hidden = true; $("#issueView").hidden = false;
-      renderIssue(parseInt(m[1], 10));
-      window.scrollTo(0, 0);
-    } else {
-      $("#issueView").hidden = true; $("#listView").hidden = false;
-      renderProject(); renderList();
-    }
-  }
-  function refresh() { route(); }
-
-  /* ================= 操作 ================= */
-  $("#role").value = role;
-  $("#role").addEventListener("change", function () { role = $("#role").value; lsSet("shuusei-role", role); confirmDel = false; refresh(); });
-
-  $("#chips").addEventListener("click", function (e) {
-    var b = e.target.closest(".chip"); if (!b) return;
-    view.status = b.dataset.status; renderList();
-  });
-  $("#q").addEventListener("input", function () { view.q = $("#q").value.trim(); renderList(); });
-  $("#fCat").addEventListener("change", function () { view.cat = $("#fCat").value; renderList(); });
-  $("#rows").addEventListener("click", function (e) {
-    var r = e.target.closest(".row-i"); if (r) location.hash = "#/i/" + r.dataset.no;
-  });
-  $("#backBtn").addEventListener("click", function () { location.hash = "#/"; });
-  window.addEventListener("hashchange", route);
-
-  $("#fCat").innerHTML = '<option value="all">すべての分類</option>' + CATEGORIES.map(function (c) { return "<option>" + c + "</option>"; }).join("");
-
-  /* 案件情報 */
-  $("#editProj").addEventListener("click", function () {
-    var p = store.project(); $("#fpName").value = p.name || ""; $("#fpUrl").value = p.siteUrl || "";
-    $("#projForm").hidden = false; $("#fpName").focus();
-  });
-  $("#projCancel").addEventListener("click", function () { $("#projForm").hidden = true; });
-  $("#projForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    store.setProject({ name: $("#fpName").value.trim(), siteUrl: $("#fpUrl").value.trim() });
-    $("#projForm").hidden = true; renderProject();
-  });
-
-  /* 新規依頼 */
   async function shrink(bmp) {
     var sc = Math.min(1, 1200 / Math.max(bmp.width, bmp.height)), q = 0.72, out = "";
     for (var t = 0; t < 5; t++) {
@@ -693,6 +636,99 @@
   });
 
   var nAtt = Attach("n", "#newForm", "#nErr"), cAtt = Attach("c", "#cForm", "#cErr");
+
+  /* ============ 画面の切り替え ============ */
+  function show(id) {
+    ["homeView", "masterView", "listView", "issueView"].forEach(function (v) { $("#" + v).hidden = v !== id; });
+    var b = $("#roleBadge");
+    if (id === "listView" || id === "issueView") { b.textContent = ROLE_LABEL[S.proj.role]; b.dataset.r = S.proj.role; b.hidden = false; }
+    else b.hidden = true;
+    window.scrollTo(0, 0);
+  }
+  function fill(id, list, cur) {
+    $(id).innerHTML = list.map(function (v) { return "<option" + (v === cur ? " selected" : "") + ">" + esc(v) + "</option>"; }).join("");
+  }
+  function opts(list, cur) { return list.map(function (v) { return "<option" + (v === cur ? " selected" : "") + ">" + esc(v) + "</option>"; }).join(""); }
+  var isAdmin = function () { return S.proj && S.proj.role === "admin"; };
+
+  /* ---- ホーム ---- */
+  function showHome(msg) {
+    show("homeView");
+    document.title = "修正依頼シート";
+    $("#demoBox").hidden = !DEMO;
+    var e = $("#hErr"); e.textContent = msg || ""; e.hidden = !msg;
+  }
+  $("#hForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var v = $("#hKey").value.trim(), m = v.match(/#\/p\/([^\/?#\s]+)/);
+    var key = m ? m[1] : v;
+    if (!key) return;
+    location.hash = "#/p/" + encodeURIComponent(key);
+  });
+
+  /* ---- 案件（一覧） ---- */
+  async function loadProject(key) {
+    var r = await Promise.all([rpc("get_project", { p_key: key }), rpc("list_issues", { p_key: key })]);
+    S.key = key; S.proj = r[0]; S.issues = r[1];
+  }
+  async function refreshList() {
+    try { S.issues = await rpc("list_issues", { p_key: S.key }); renderList(); } catch (e) {}
+  }
+  function renderProject() {
+    var p = S.proj;
+    $("#pName").textContent = p.name || "（案件名なし）";
+    document.title = (p.name ? p.name + " | " : "") + "修正依頼シート";
+    var a = $("#pSite");
+    if (isHttp(p.site_url)) { a.href = p.site_url; a.textContent = "サイトを開く ↗"; a.hidden = false; } else { a.hidden = true; }
+    $("#editProj").hidden = !isAdmin();
+  }
+  function renderList() {
+    var all = S.issues, counts = { all: all.length };
+    STATUSES.forEach(function (s) { counts[s] = all.filter(function (i) { return i.status === s; }).length; });
+    $("#chips").innerHTML = ["all"].concat(STATUSES).map(function (s) {
+      return '<button type="button" class="chip" data-status="' + s + '" aria-pressed="' + (view.status === s) + '">' + (s === "all" ? "すべて" : s) + '<span class="n">' + counts[s] + "</span></button>";
+    }).join("");
+    var q = view.q.toLowerCase();
+    var list = all.filter(function (i) {
+      if (view.status !== "all" && i.status !== view.status) return false;
+      if (view.cat !== "all" && i.category !== view.cat) return false;
+      if (q && (i.title + " " + i.page_url + " " + i.reporter).toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    });
+    if (!all.length) { $("#rows").innerHTML = '<p class="empty">まだ修正依頼はありません。「＋ 修正を依頼する」から追加してください。</p>'; return; }
+    if (!list.length) { $("#rows").innerHTML = '<p class="empty">条件に合う依頼はありません。</p>'; return; }
+    $("#rows").innerHTML = list.map(function (i) {
+      var sub = [i.category];
+      if (i.page_url) sub.push(i.page_url);
+      if (i.image_count) sub.push("画像 " + i.image_count);
+      if (i.comment_count) sub.push("コメント " + i.comment_count);
+      return '<button type="button" class="row-i" data-no="' + i.no + '"><span class="c-no mono">#' + i.no + "</span>" +
+        '<span class="c-main"><span class="ttl">' + esc(i.title) + '</span><span class="sub">' + esc(sub.join(" ・ ")) + "</span></span>" +
+        '<span class="prio" data-p="' + esc(i.priority) + '">' + esc(i.priority) + "</span>" +
+        '<span class="pill" data-s="' + esc(i.status) + '">' + esc(i.status) + "</span>" +
+        '<span class="c-when mono">' + esc(i.reporter || "―") + "<br>" + fmt(i.updated_at) + "</span></button>";
+    }).join("");
+  }
+  function showList() { show("listView"); renderProject(); renderList(); refreshList(); }
+
+  $("#chips").addEventListener("click", function (e) { var b = e.target.closest(".chip"); if (b) { view.status = b.dataset.status; renderList(); } });
+  $("#q").addEventListener("input", function () { view.q = $("#q").value.trim(); renderList(); });
+  $("#fCat").innerHTML = '<option value="all">すべての分類</option>' + CATEGORIES.map(function (c) { return "<option>" + c + "</option>"; }).join("");
+  $("#fCat").addEventListener("change", function () { view.cat = $("#fCat").value; renderList(); });
+  $("#rows").addEventListener("click", function (e) { var r = e.target.closest(".row-i"); if (r) location.hash = "#/p/" + encodeURIComponent(S.key) + "/" + r.dataset.no; });
+
+  /* 案件情報の編集（制作チームのみ） */
+  $("#editProj").addEventListener("click", function () { $("#fpName").value = S.proj.name || ""; $("#fpUrl").value = S.proj.site_url || ""; $("#projForm").hidden = false; $("#fpName").focus(); });
+  $("#projCancel").addEventListener("click", function () { $("#projForm").hidden = true; });
+  $("#projForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    try {
+      await rpc("update_project", { p_key: S.key, p_name: $("#fpName").value.trim(), p_site_url: $("#fpUrl").value.trim() });
+      S.proj = await rpc("get_project", { p_key: S.key }); $("#projForm").hidden = true; renderProject();
+    } catch (err) { alert(errMsg(err)); }
+  });
+
+  /* 新規依頼 */
   $("#nDetail").addEventListener("input", function () {
     var t = $("#nDetail").value.trim(), box = $("#nAuto");
     if (!t) { box.hidden = true; return; }
@@ -705,111 +741,197 @@
     if (!f.hidden) { $("#nName").value = lsGet("shuusei-name"); $("#nDetail").focus(); }
   });
   $("#newCancel").addEventListener("click", function () { $("#newForm").hidden = true; });
-  $("#newForm").addEventListener("submit", function (e) {
+  $("#newForm").addEventListener("submit", async function (e) {
     e.preventDefault();
-    var detail = $("#nDetail").value.trim(), imgs = nAtt.get();
-    if (!detail && !imgs.length) { $("#nErr").textContent = "修正してほしい内容を入力してください（画像だけでも送れます）。"; $("#nErr").hidden = false; return; }
-    $("#nErr").hidden = true;
-    var auto = autoFill(detail);
-    var name = $("#nName").value.trim();
+    var detail = $("#nDetail").value.trim(), imgs = nAtt.get(), err = $("#nErr");
+    if (!detail && !imgs.length) { err.textContent = "修正してほしい内容を入力してください（画像だけでも送れます）。"; err.hidden = false; return; }
+    err.hidden = true;
+    var auto = autoFill(detail), name = $("#nName").value.trim(), btn = e.submitter || $("#newForm button[type=submit]");
     lsSet("shuusei-name", name);
-    var no = store.add({ title: detail ? auto.title : "画像での修正依頼", pageUrl: $("#nPage").value.trim(), detail: detail,
-      category: auto.category, priority: auto.priority, reporter: name, images: imgs });
-    $("#nPage").value = ""; $("#nDetail").value = ""; $("#nAuto").hidden = true; nAtt.clear();
-    $("#newForm").hidden = true;
-    location.hash = "#/i/" + no;
+    btn.disabled = true;
+    try {
+      var no = await rpc("add_issue", { p_key: S.key, p_title: detail ? auto.title : "画像での修正依頼", p_page_url: $("#nPage").value.trim(), p_detail: detail,
+        p_category: auto.category, p_priority: auto.priority, p_reporter: name, p_images: imgs });
+      $("#nPage").value = ""; $("#nDetail").value = ""; $("#nAuto").hidden = true; nAtt.clear(); $("#newForm").hidden = true;
+      location.hash = "#/p/" + encodeURIComponent(S.key) + "/" + no;
+    } catch (ex) { err.textContent = errMsg(ex); err.hidden = false; }
+    finally { btn.disabled = false; }
   });
 
-  /* 詳細内の操作 */
-  $("#issueBox").addEventListener("change", function (e) {
+  /* ---- 詳細 ---- */
+  function gal(list) {
+    var imgs = (list || []).map(safeImg).filter(Boolean);
+    return imgs.length ? '<div class="gal">' + imgs.map(function (s, n) { return '<img class="gimg" alt="添付画像 ' + (n + 1) + '（クリックで拡大）" src="' + s + '">'; }).join("") + "</div>" : "";
+  }
+  document.addEventListener("click", function (e) { if (e.target.classList && e.target.classList.contains("gimg")) e.target.classList.toggle("big"); });
+
+  function renderIssue() {
+    var i = S.cur;
+    var h = '<div class="ihead"><span class="mono c-no">#' + i.no + '</span><span class="pill" data-s="' + esc(i.status) + '">' + esc(i.status) + "</span></div>" +
+      '<h2 class="ititle">' + esc(i.title) + "</h2>" +
+      '<dl class="facts"><dt>分類</dt><dd>' + esc(i.category) + "</dd><dt>優先度</dt><dd>" + esc(i.priority) + "</dd>" +
+      "<dt>対象</dt><dd>" + (isHttp(i.page_url) ? '<a href="' + esc(i.page_url) + '" target="_blank" rel="noopener noreferrer">' + esc(i.page_url) + " ↗</a>" : esc(i.page_url || "―")) + "</dd>" +
+      "<dt>報告者</dt><dd>" + esc(i.reporter || "―") + "</dd><dt>依頼日</dt><dd class='mono'>" + fmtFull(i.created_at) + "</dd>" +
+      "<dt>担当</dt><dd>" + esc(i.assignee || "未定") + "</dd></dl>" +
+      (i.detail ? '<div class="detail">' + esc(i.detail) + "</div>" : "") + gal(i.images);
+    if (isAdmin()) {
+      h += '<div class="ctrl"><div class="field" style="flex:1 1 100%"><label for="sTitle">題名（自動で付いたものを直せます）</label><input type="text" id="sTitle" data-field="title" value="' + esc(i.title) + '" maxlength="120"></div>' +
+        '<div class="field"><label for="sStatus">状態</label><select id="sStatus" data-field="status">' + opts(STATUSES, i.status) + "</select></div>" +
+        '<div class="field"><label for="sPrio">優先度</label><select id="sPrio" data-field="priority">' + opts(["高", "中", "低"], i.priority) + "</select></div>" +
+        '<div class="field"><label for="sCat">分類</label><select id="sCat" data-field="category">' + opts(CATEGORIES, i.category) + "</select></div>" +
+        '<div class="field"><label for="sAssign">担当</label><input type="text" id="sAssign" data-field="assignee" value="' + esc(i.assignee) + '" maxlength="40" style="width:9em"></div>' +
+        '<div class="acts"><button type="button" class="linkbtn danger' + (confirmDel ? " confirm" : "") + '" data-act="del">' + (confirmDel ? "本当に削除" : "この依頼を削除") + "</button></div></div>";
+    } else if (i.status === "確認待ち") {
+      h += '<div class="ctrl"><span>制作チームから修正の確認依頼が来ています。</span><div class="acts">' +
+        '<button type="button" class="primary" data-act="ok">修正を確認しました（完了）</button>' +
+        '<button type="button" class="ghost" data-act="ng">まだ直っていません（差し戻し）</button></div></div>';
+    }
+    h += '<span class="label">やりとり</span><ol class="comments">' +
+      (i.comments.length ? i.comments.map(function (c) {
+        return '<li><div class="chead"><span class="cname">' + esc(c.author || "名無しさん") + '</span><span class="badge" data-r="' + esc(c.role) + '">' + esc(ROLE_LABEL[c.role] || "") +
+          '</span><span class="mono">' + fmt(c.created_at) + '</span></div>' + (c.body ? '<div class="cbody">' + esc(c.body) + "</div>" : "") + gal(c.images) + "</li>";
+      }).join("") : '<li class="hint">まだコメントはありません。</li>') + "</ol>";
+    $("#issueBox").innerHTML = h;
+    document.title = "#" + i.no + " " + i.title + " | 修正依頼シート";
+  }
+  async function showIssue(no) {
+    confirmDel = false; $("#iErr").hidden = true;
+    show("issueView");
+    $("#issueBox").innerHTML = '<p class="skeleton mono">読み込み中…</p>';
+    try { S.cur = await rpc("get_issue", { p_key: S.key, p_no: no }); renderIssue(); }
+    catch (e) { location.hash = "#/p/" + encodeURIComponent(S.key); }
+  }
+  async function reloadIssue() { S.cur = await rpc("get_issue", { p_key: S.key, p_no: S.cur.no }); renderIssue(); }
+  function iErr(e) { var el = $("#iErr"); el.textContent = errMsg(e); el.hidden = false; }
+  var authorName = function () { return lsGet("shuusei-name"); };
+
+  $("#backBtn").addEventListener("click", function () { location.hash = "#/p/" + encodeURIComponent(S.key); });
+  $("#issueBox").addEventListener("change", async function (e) {
     var f = e.target.dataset.field; if (!f) return;
-    var no = parseInt(location.hash.split("/")[2], 10), patch = {};
-    patch[f] = e.target.value.trim();
-    store.update(no, patch); renderIssue(no);
+    var patch = {}; patch[f] = e.target.value.trim();
+    try { $("#iErr").hidden = true; await rpc("update_issue", { p_key: S.key, p_no: S.cur.no, p_patch: patch }); await reloadIssue(); } catch (ex) { iErr(ex); }
   });
-  $("#issueBox").addEventListener("click", function (e) {
+  $("#issueBox").addEventListener("click", async function (e) {
     var b = e.target.closest("[data-act]"); if (!b) return;
-    var no = parseInt(location.hash.split("/")[2], 10);
-    var name = lsGet("shuusei-name") || (role === "admin" ? "制作チーム" : "クライアント");
-    if (b.dataset.act === "ok") {
-      store.update(no, { status: "完了" }); store.comment(no, { author: name, role: role, body: "修正を確認しました。完了とします。" }); renderIssue(no);
-    } else if (b.dataset.act === "ng") {
-      store.update(no, { status: "未対応" }); store.comment(no, { author: name, role: role, body: "まだ直っていないため、差し戻します。" }); renderIssue(no);
-    } else if (b.dataset.act === "del") {
-      if (!confirmDel) { confirmDel = true; clearTimeout(delTimer); delTimer = setTimeout(function () { confirmDel = false; if (location.hash.indexOf("#/i/") === 0) renderIssue(no); }, 4000); renderIssue(no); return; }
-      clearTimeout(delTimer); confirmDel = false; store.remove(no); location.hash = "#/";
+    var no = S.cur.no, act = b.dataset.act;
+    $("#iErr").hidden = true;
+    try {
+      if (act === "ok" || act === "ng") {
+        b.disabled = true;
+        await rpc("update_issue", { p_key: S.key, p_no: no, p_patch: { status: act === "ok" ? "完了" : "未対応" } });
+        await rpc("add_comment", { p_key: S.key, p_no: no, p_author: authorName() || "クライアント", p_body: act === "ok" ? "修正を確認しました。完了とします。" : "まだ直っていないため、差し戻します。", p_images: [] });
+        await reloadIssue();
+      } else if (act === "del") {
+        if (!confirmDel) { confirmDel = true; clearTimeout(delTimer); delTimer = setTimeout(function () { confirmDel = false; if (S.cur && !$("#issueView").hidden) renderIssue(); }, 4000); renderIssue(); return; }
+        clearTimeout(delTimer); confirmDel = false;
+        await rpc("delete_issue", { p_key: S.key, p_no: no });
+        location.hash = "#/p/" + encodeURIComponent(S.key);
+      }
+    } catch (ex) { iErr(ex); try { await reloadIssue(); } catch (e2) {} }
+  });
+  $("#cForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var body = $("#cBody").value.trim(), imgs = cAtt.get(), err = $("#cErr");
+    if (!body && !imgs.length) { err.textContent = "コメントか画像を入れてください。"; err.hidden = false; return; }
+    err.hidden = true;
+    var name = $("#cName").value.trim(); lsSet("shuusei-name", name);
+    var btn = e.submitter || $("#cForm button[type=submit]"); btn.disabled = true;
+    try {
+      await rpc("add_comment", { p_key: S.key, p_no: S.cur.no, p_author: name, p_body: body, p_images: imgs });
+      $("#cBody").value = ""; cAtt.clear(); await reloadIssue();
+    } catch (ex) { err.textContent = errMsg(ex); err.hidden = false; }
+    finally { btn.disabled = false; }
+  });
+  $("#cBody").addEventListener("keydown", function (ev) { if ((ev.ctrlKey || ev.metaKey) && ev.key === "Enter") $("#cForm").requestSubmit(); });
+  $("#cName").value = lsGet("shuusei-name");
+
+  /* CSV */
+  $("#expCsv").addEventListener("click", function () {
+    var rows = [["No", "内容", "対象", "分類", "優先度", "状態", "報告者", "担当", "コメント数", "画像数", "依頼日", "更新日"]];
+    S.issues.slice().sort(function (a, b) { return a.no - b.no; }).forEach(function (i) {
+      rows.push([i.no, i.title, i.page_url, i.category, i.priority, i.status, i.reporter, i.assignee, i.comment_count, i.image_count, fmtFull(i.created_at), fmtFull(i.updated_at)]);
+    });
+    var csv = rows.map(function (r) { return r.map(function (v) { return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; }).join(","); }).join("\r\n");
+    var a = document.createElement("a"), d = new Date();
+    a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv" }));
+    a.download = "revision-sheet-" + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + ".csv";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  });
+
+  /* ---- 案件の管理（マスターキー） ---- */
+  function urlFor(key) { return location.href.split("#")[0] + "#/p/" + key; }
+  var regenId = null, regenTimer = null;
+  function renderMaster(list) {
+    $("#mList").innerHTML = list.length ? list.map(function (p) {
+      function row(label, key) {
+        return '<div class="urlrow"><span class="label">' + label + '</span><input type="text" readonly value="' + esc(urlFor(key)) + '" aria-label="' + label + 'のURL">' +
+          '<button type="button" class="ghost" data-copy>コピー</button><a class="ghost" href="' + esc(urlFor(key)) + '" target="_blank" rel="noopener noreferrer">開く</a></div>';
+      }
+      return '<div class="pcard"><div class="ph2"><b>' + esc(p.name) + '</b><span class="hint mono">未完了 ' + p.open + " / 全 " + p.total + " 件</span></div>" +
+        (p.site_url ? '<div class="hint">' + esc(p.site_url) + "</div>" : "") +
+        row("クライアント用", p.client_key) + row("制作チーム用", p.admin_key) +
+        '<button type="button" class="linkbtn danger' + (regenId === p.id ? " confirm" : "") + '" data-regen="' + esc(p.id) + '">' +
+        (regenId === p.id ? "本当に再発行（今のURLは使えなくなります）" : "キーを再発行する") + "</button></div>";
+    }).join("") : '<p class="empty">まだ案件がありません。上のフォームから追加してください。</p>';
+  }
+  async function masterLoad() { renderMaster(await rpc("list_projects", { p_master: mkey })); }
+  async function showMaster() {
+    show("masterView"); document.title = "案件の管理 | 修正依頼シート";
+    var saved = ssGet("rs-master");
+    if (saved && !mkey) { mkey = saved; try { await masterLoad(); $("#mForm").hidden = true; $("#mBody").hidden = false; return; } catch (e) { mkey = ""; ssSet("rs-master", ""); } }
+    if (mkey) { try { await masterLoad(); $("#mForm").hidden = true; $("#mBody").hidden = false; return; } catch (e) { mkey = ""; } }
+    $("#mForm").hidden = false; $("#mBody").hidden = true;
+  }
+  $("#mForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    mkey = $("#mKey").value.trim(); var err = $("#mErr"); err.hidden = true;
+    try { await masterLoad(); ssSet("rs-master", mkey); $("#mKey").value = ""; $("#mForm").hidden = true; $("#mBody").hidden = false; }
+    catch (ex) { mkey = ""; err.textContent = ex.code === "forbidden" ? "マスターキーが違います。" : errMsg(ex); err.hidden = false; }
+  });
+  $("#mNew").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var n = $("#mnName").value.trim(); if (!n) return;
+    try { await rpc("create_project", { p_master: mkey, p_name: n, p_site_url: $("#mnUrl").value.trim() }); $("#mnName").value = ""; $("#mnUrl").value = ""; await masterLoad(); }
+    catch (ex) { alert(errMsg(ex)); }
+  });
+  $("#mList").addEventListener("click", async function (e) {
+    var c = e.target.closest("[data-copy]");
+    if (c) {
+      var inp = c.closest(".urlrow").querySelector("input");
+      try { await navigator.clipboard.writeText(inp.value); c.textContent = "コピーしました"; }
+      catch (er) { inp.select(); c.textContent = "選択しました"; }
+      setTimeout(function () { c.textContent = "コピー"; }, 1500); return;
+    }
+    var r = e.target.closest("[data-regen]");
+    if (r) {
+      if (regenId !== r.dataset.regen) { regenId = r.dataset.regen; clearTimeout(regenTimer); regenTimer = setTimeout(function () { regenId = null; masterLoad().catch(function () {}); }, 4000); await masterLoad(); return; }
+      clearTimeout(regenTimer); var id = regenId; regenId = null;
+      try { await rpc("regenerate_keys", { p_master: mkey, p_id: id }); await masterLoad(); } catch (ex) { alert(errMsg(ex)); }
     }
   });
 
-  /* コメント */
-  $("#cForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var body = $("#cBody").value.trim(), imgs = cAtt.get();
-    if (!body && !imgs.length) { $("#cErr").textContent = "コメントか画像を入れてください。"; $("#cErr").hidden = false; return; }
-    $("#cErr").hidden = true;
-    var name = $("#cName").value.trim(); lsSet("shuusei-name", name);
-    var no = parseInt(location.hash.split("/")[2], 10);
-    store.comment(no, { author: name, role: role, body: body, images: imgs });
-    $("#cBody").value = ""; cAtt.clear(); renderIssue(no);
-  });
-  $("#cBody").addEventListener("keydown", function (ev) { if ((ev.ctrlKey || ev.metaKey) && ev.key === "Enter") $("#cForm").requestSubmit(); });
-  window.addEventListener("hashchange", function () { $("#cName").value = lsGet("shuusei-name"); });
-  $("#cName").value = lsGet("shuusei-name");
-
-  /* 書き出し・読み込み */
-  function download(name, text, type) {
-    var blob = new Blob([text], { type: type });
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(blob); a.download = name;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  /* ============ ルーティング ============ */
+  var routing = 0;
+  async function route() {
+    var my = ++routing;
+    var parts = location.hash.replace(/^#\/?/, "").split("/");
+    if (parts[0] === "p" && parts[1]) {
+      var key = decodeURIComponent(parts[1]);
+      try { if (S.key !== key || !S.proj) await loadProject(key); }
+      catch (e) { if (my !== routing) return; S.key = null; S.proj = null; showHome(errMsg(e)); return; }
+      if (my !== routing) return;
+      if (parts[2] && /^\d+$/.test(parts[2])) await showIssue(parseInt(parts[2], 10)); else showList();
+    } else if (parts[0] === "master") showMaster();
+    else showHome();
   }
-  function stamp() { var d = new Date(); return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()); }
-  function ioMsg(t, bad) { var el = $("#ioMsg"); el.textContent = t; el.hidden = !t; el.style.color = bad ? "" : "var(--muted)"; }
-  $("#expJson").addEventListener("click", function () {
-    var d = store.all();
-    download("shuusei-sheet-" + stamp() + ".json", JSON.stringify(d, null, 2), "application/json");
-    ioMsg("JSONを書き出しました。読み込みは、同じ形式のファイルを「JSONを読み込む」から選びます。");
-  });
-  $("#expCsv").addEventListener("click", function () {
-    var rows = [["No", "内容", "対象", "分類", "優先度", "状態", "報告者", "担当", "詳細", "コメント数", "依頼日", "更新日"]];
-    store.issues().slice().sort(function (a, b) { return a.no - b.no; }).forEach(function (i) {
-      rows.push([i.no, i.title, i.pageUrl, i.category, i.priority, i.status, i.reporter, i.assignee, i.detail, i.comments.length, fmtFull(i.createdAt), fmtFull(i.updatedAt)]);
-    });
-    var csv = rows.map(function (r) { return r.map(function (v) { return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; }).join(","); }).join("\r\n");
-    download("shuusei-sheet-" + stamp() + ".csv", "﻿" + csv, "text/csv");
-    ioMsg("CSVを書き出しました（Excelでそのまま開けます）。");
-  });
-  $("#impBtn").addEventListener("click", function () { $("#impFile").click(); });
-  $("#impFile").addEventListener("change", function (e) {
-    var f = e.target.files && e.target.files[0]; if (!f) return;
-    var r = new FileReader();
-    r.onload = function () {
-      try {
-        var d = JSON.parse(r.result);
-        if (!d || !Array.isArray(d.issues) || !d.project) throw new Error("bad");
-        d.issues.forEach(function (i) { i.comments = Array.isArray(i.comments) ? i.comments : []; });
-        d.nextNo = Math.max.apply(null, [0].concat(d.issues.map(function (i) { return i.no || 0; }))) + 1;
-        d.nextCid = Math.max.apply(null, [0].concat(d.issues.reduce(function (a, i) { return a.concat(i.comments.map(function (c) { return c.id || 0; })); }, []))) + 1;
-        if (!confirm("いまの内容を、読み込むファイルの内容で置き換えます。よろしいですか？")) return;
-        store.replace(d); ioMsg("読み込みました（" + d.issues.length + " 件）。"); refresh();
-      } catch (err) { ioMsg("このファイルは読み込めません。このページで書き出したJSONを選んでください。", true); }
-      $("#impFile").value = "";
-    };
-    r.readAsText(f);
-  });
-  var clearArmed = false, clearTimer = null;
-  $("#clearAll").addEventListener("click", function () {
-    var b = $("#clearAll");
-    if (!clearArmed) { clearArmed = true; b.textContent = "本当に全部消す"; b.classList.add("confirm"); clearTimer = setTimeout(function () { clearArmed = false; b.textContent = "すべて消去"; b.classList.remove("confirm"); }, 4000); return; }
-    clearTimeout(clearTimer); clearArmed = false; b.textContent = "すべて消去"; b.classList.remove("confirm");
-    store.reset(); $("#notice").textContent = baseNotice; refresh();
-  });
+  window.addEventListener("hashchange", route);
+  setInterval(function () {
+    if (!$("#listView").hidden && !document.hidden && $("#newForm").hidden && S.key) refreshList();
+  }, 30000);
 
-  /* サンプル表示中の案内 */
-  var baseNotice = $("#notice").textContent;
-  if (store.all().sample) {
-    $("#notice").innerHTML = "いまはサンプルの依頼が入っています。画面の確認が済んだら、一番下の「すべて消去」で空にして使い始めてください。<br>" + esc(baseNotice);
+  if (DEMO) {
+    $("#demoNote").textContent = CFG.url ? "デモモードです。Supabase の公開キーが未設定のため、入力内容はこのブラウザにだけ保存されます。" : "デモモードです。";
+    $("#demoNote").hidden = false;
   }
   route();
 })();
