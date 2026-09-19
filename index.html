@@ -377,6 +377,7 @@
   var CFG = { url: "https://oigmsndcrlrpubfcpicn.supabase.co", anonKey: "sb_publishable_MiLXNQsoNCTSWYli0dVB9A_7yMFmxSG" };
 
   var STATUSES = ["未対応", "対応中", "確認待ち", "完了", "保留"];
+  var CHIP_STATUSES = ["未対応", "対応中", "完了", "保留"];   /* 上のタブに出す状態 */
   var ROLE_LABEL = { client: "クライアント", admin: "制作チーム" };
   var ERRORS = {
     invalid_key: "このキーは無効です。URLをご確認ください。",
@@ -436,7 +437,7 @@
     return t;
   }
   var S = { key: null, proj: null, issues: [], cur: null };
-  var view = { status: "all", cat: "all", q: "" };
+  var view = { statuses: [], q: "" };   /* statuses が空 = すべて */
   var confirmDel = false, delTimer = null, mkey = "", delRow = null, delRowTimer = null, editC = null, confirmC = null, cTimer = null;
 
   async function shrink(bmp) {
@@ -636,13 +637,14 @@
     var all = S.issues;
     $("#listView").classList.toggle("adm", isAdmin() || all.some(function (i) { return i.mine; }));
     var counts = { all: all.length };
-    STATUSES.forEach(function (s) { counts[s] = all.filter(function (i) { return i.status === s; }).length; });
-    $("#chips").innerHTML = ["all"].concat(STATUSES).map(function (s) {
-      return '<button type="button" class="chip" data-status="' + s + '" aria-pressed="' + (view.status === s) + '">' + (s === "all" ? "すべて" : s) + '<span class="n">' + counts[s] + "</span></button>";
+    CHIP_STATUSES.forEach(function (s) { counts[s] = all.filter(function (i) { return i.status === s; }).length; });
+    $("#chips").innerHTML = ["all"].concat(CHIP_STATUSES).map(function (s) {
+      var on = s === "all" ? view.statuses.length === 0 : view.statuses.indexOf(s) >= 0;
+      return '<button type="button" class="chip" data-status="' + s + '" aria-pressed="' + on + '">' + (s === "all" ? "すべて" : s) + '<span class="n">' + counts[s] + "</span></button>";
     }).join("");
     var q = view.q.toLowerCase();
     var list = all.filter(function (i) {
-      if (view.status !== "all" && i.status !== view.status) return false;
+      if (view.statuses.length && view.statuses.indexOf(i.status) < 0) return false;
       if (q && (i.title + " " + i.page_url + " " + i.reporter).toLowerCase().indexOf(q) < 0) return false;
       return true;
     });
@@ -663,7 +665,14 @@
   }
   function showList() { show("listView"); renderProject(); renderList(); refreshList(); }
 
-  $("#chips").addEventListener("click", function (e) { var b = e.target.closest(".chip"); if (b) { view.status = b.dataset.status; renderList(); } });
+  /* 上のタブは複数選択できる。「すべて」を押すと選択が全部外れる */
+  $("#chips").addEventListener("click", function (e) {
+    var b = e.target.closest(".chip"); if (!b) return;
+    var st = b.dataset.status;
+    if (st === "all") view.statuses = [];
+    else { var k = view.statuses.indexOf(st); if (k >= 0) view.statuses.splice(k, 1); else view.statuses.push(st); }
+    renderList();
+  });
   $("#q").addEventListener("input", function () { view.q = $("#q").value.trim(); renderList(); });
   $("#rows").addEventListener("click", async function (e) {
     var d = e.target.closest("[data-del]");
