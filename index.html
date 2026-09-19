@@ -133,8 +133,16 @@
   .row-i { width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--rule); padding: 11px 8px; }
   .rw { position: relative; }
   .rw:first-child .row-i { border-top: 0; }
-  .rdel { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 1; }
-  #listView.adm .list-head, #listView.adm .row-i { grid-template-columns: 3.4em minmax(0, 1fr) 4em 6.2em 9em 5.2em; }
+  .rdel { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 1; }
+  .acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .abtn { display: inline-flex; align-items: center; gap: 5px; background: var(--surface-2); border: 1px solid var(--rule); border-radius: 3px; padding: 5px 12px; font-size: 13px; line-height: 1.4; color: var(--accent); white-space: nowrap; }
+  .abtn:hover { background: var(--accent-soft); border-color: var(--accent); }
+  .abtn.sm { padding: 2px 9px; font-size: 12.5px; }
+  .abtn.danger { color: var(--signal); }
+  .abtn.danger:hover { background: var(--s-todo-bg); border-color: var(--signal); }
+  .abtn.danger.confirm { background: var(--signal); border-color: var(--signal); color: var(--on-accent); font-weight: 500; }
+  .abtn svg { flex: none; }
+  #listView.adm .list-head, #listView.adm .row-i { grid-template-columns: 3.4em minmax(0, 1fr) 4em 6.2em 9em 8.2em; }
   .row-i:hover { background: var(--surface); }
   .c-no { color: var(--muted); font-size: 13px; }
   .ttl { display: block; font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; }
@@ -196,7 +204,7 @@
   .urlrow input { font-size: 12.5px; padding: 6px 8px; font-family: "IBM Plex Mono", ui-monospace, monospace; }
   .urlrow a.ghost { text-decoration: none; }
   .skeleton { color: var(--muted); font-size: 13px; padding: 26px 4px; }
-  .cact { margin-left: auto; display: flex; gap: 12px; }
+  .cact { margin-left: auto; display: flex; gap: 8px; }
   .cedit textarea { min-height: 70px; margin-top: 4px; }
   @media (max-width: 680px) { .urlrow { grid-template-columns: 1fr auto auto; } .urlrow .label { grid-column: 1 / -1; } }
 </style>
@@ -282,7 +290,7 @@
         </div>
         <div class="thumbs" id="nThumbs" hidden></div>
       </div>
-      <div class="field"><label for="nName">お名前</label><input type="text" id="nName" maxlength="40" placeholder="例）田中" autocomplete="off"></div>
+      <div class="field"><label for="nName">記入者</label><input type="text" id="nName" maxlength="40" placeholder="例）田中" autocomplete="off"></div>
       <div class="field"><label for="nPage">ページのURL・場所（わかれば）</label><input type="text" id="nPage" maxlength="300" placeholder="例）https://example.com/about　／　トップ > ヘッダー" autocomplete="off"></div>
       <div class="row"><span></span><span><button type="button" class="linkbtn" id="newCancel">キャンセル</button> <button type="submit" class="primary">入力する</button></span></div>
       <p class="err" id="nErr" hidden></p>
@@ -319,7 +327,7 @@
     <p class="err" id="iErr" hidden></p>
     <form class="panel" id="cForm">
       <h3>コメントを書く</h3>
-      <div class="field"><label for="cName">お名前</label><input type="text" id="cName" maxlength="40" autocomplete="off"></div>
+      <div class="field"><label for="cName">記入者</label><input type="text" id="cName" maxlength="40" autocomplete="off"></div>
       <div class="field"><label for="cBody">コメント</label><textarea id="cBody" maxlength="2000" placeholder="追記や質問、確認結果などを書いてください"></textarea></div>
       <div class="field">
         <span>画像（任意・5枚まで）</span>
@@ -393,6 +401,11 @@
   function safeImg(s) { return typeof s === "string" && /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(s) ? s : ""; }
   function lsGet(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  var IC_EDIT = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>';
+  var IC_DEL = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
+  /* 編集・削除ボタン（アイコン付き）。削除は「本当に削除」の2回押しで確定 */
+  function editBtn(attrs, small) { return '<button type="button" class="abtn' + (small ? " sm" : "") + '" ' + attrs + ">" + IC_EDIT + "<span>編集</span></button>"; }
+  function delBtn(attrs, armed, label, small) { return '<button type="button" class="abtn danger' + (armed ? " confirm" : "") + (small ? " sm" : "") + '" ' + attrs + ">" + IC_DEL + "<span>" + (armed ? "本当に削除" : label) + "</span></button>"; }
   function ssGet(k) { try { return sessionStorage.getItem(k) || ""; } catch (e) { return ""; } }
   function ssSet(k, v) { try { if (v) sessionStorage.setItem(k, v); else sessionStorage.removeItem(k); } catch (e) {} }
 
@@ -645,7 +658,7 @@
         '<span class="prio" data-p="' + esc(i.priority) + '">' + esc(i.priority) + "</span>" +
         '<span class="pill" data-s="' + esc(i.status) + '">' + esc(i.status) + "</span>" +
         '<span class="c-when mono">' + esc(i.reporter || "―") + "<br>" + fmt(i.updated_at) + "</span></button>" +
-        ((isAdmin() || i.mine) ? '<button type="button" class="linkbtn danger rdel' + (delRow === i.no ? " confirm" : "") + '" data-del="' + i.no + '">' + (delRow === i.no ? "本当に削除" : "削除") + "</button>" : "") + "</div>";
+        ((isAdmin() || i.mine) ? delBtn('data-del="' + i.no + '"', delRow === i.no, "削除", true).replace('class="abtn', 'class="rdel abtn') : "") + "</div>";
     }).join("");
   }
   function showList() { show("listView"); renderProject(); renderList(); refreshList(); }
@@ -683,11 +696,17 @@
     box.innerHTML = "自動で付く内容　題名：<b>" + esc(a.title) + "</b>　／　優先度：<b>" + esc(a.priority) + "</b>";
     box.hidden = false;
   });
-  $("#newBtn").addEventListener("click", function () {
-    var f = $("#newForm"); f.hidden = !f.hidden;
-    if (!f.hidden) { $("#nName").value = lsGet("shuusei-name"); $("#nDetail").focus(); }
-  });
-  $("#newCancel").addEventListener("click", function () { $("#newForm").hidden = true; });
+  /* 入力欄が開いているときは、ボタンが「閉じる」に変わる */
+  function setNewOpen(open) {
+    var f = $("#newForm"), b = $("#newBtn");
+    f.hidden = !open;
+    b.textContent = open ? "× 閉じる" : "＋ コメントする";
+    b.className = open ? "ghost" : "primary";
+    b.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) { $("#nName").value = lsGet("shuusei-name"); $("#nDetail").focus(); }
+  }
+  $("#newBtn").addEventListener("click", function () { setNewOpen($("#newForm").hidden); });
+  $("#newCancel").addEventListener("click", function () { setNewOpen(false); });
   $("#newForm").addEventListener("submit", async function (e) {
     e.preventDefault();
     var detail = $("#nDetail").value.trim(), imgs = nAtt.get(), err = $("#nErr");
@@ -699,7 +718,7 @@
     try {
       var no = await rpc("add_issue", { p_key: S.key, p_title: detail ? auto.title : "画像での修正依頼", p_page_url: $("#nPage").value.trim(), p_detail: detail,
         p_category: "その他", p_priority: auto.priority, p_reporter: name, p_images: imgs, p_token: authorToken() });
-      $("#nPage").value = ""; $("#nDetail").value = ""; $("#nAuto").hidden = true; nAtt.clear(); $("#newForm").hidden = true;
+      $("#nPage").value = ""; $("#nDetail").value = ""; $("#nAuto").hidden = true; nAtt.clear(); setNewOpen(false);
       location.hash = "#/p/" + encodeURIComponent(S.key) + "/" + no;
     } catch (ex) { err.textContent = errMsg(ex); err.hidden = false; }
     finally { btn.disabled = false; }
@@ -722,23 +741,23 @@
       "<dt>担当</dt><dd>" + esc(i.assignee || "未定") + "</dd></dl>" +
       (i.detail ? '<div class="detail">' + esc(i.detail) + "</div>" : "") + gal(i.images);
     if (i.mine) {
-      h += '<div class="acts" style="margin-block:4px 12px"><button type="button" class="ghost" data-act="editIssue">編集</button>' +
-        (isAdmin() ? "" : '<button type="button" class="linkbtn danger' + (confirmDel ? " confirm" : "") + '" data-act="del">' + (confirmDel ? "本当に削除" : "削除") + "</button>") + "</div>";
+      h += '<div class="acts" style="margin-block:4px 12px">' + editBtn('data-act="editIssue"') +
+        (isAdmin() ? "" : delBtn('data-act="del"', confirmDel, "削除")) + "</div>";
     }
     if (isAdmin()) {
       h += '<div class="ctrl"><div class="field" style="flex:1 1 100%"><label for="sTitle">題名（自動で付いたものを直せます）</label><input type="text" id="sTitle" data-field="title" value="' + esc(i.title) + '" maxlength="120"></div>' +
         '<div class="field"><label for="sStatus">状態</label><select id="sStatus" data-field="status">' + opts(STATUSES, i.status) + "</select></div>" +
         '<div class="field"><label for="sPrio">優先度</label><select id="sPrio" data-field="priority">' + opts(["高", "中", "低"], i.priority) + "</select></div>" +
         '<div class="field"><label for="sAssign">担当</label><input type="text" id="sAssign" data-field="assignee" value="' + esc(i.assignee) + '" maxlength="40" style="width:9em"></div>' +
-        '<div class="acts"><button type="button" class="linkbtn danger' + (confirmDel ? " confirm" : "") + '" data-act="del">' + (confirmDel ? "本当に削除" : "この依頼を削除") + "</button></div></div>";
+        '<div class="acts">' + delBtn('data-act="del"', confirmDel, "この依頼を削除") + "</div></div>";
     }
-    h += '<span class="label">やりとり</span><ol class="comments">' +
+    h += '<span class="label">コメント</span><ol class="comments">' +
       (i.comments.length ? i.comments.map(function (c) {
         var acts = "";
-        if (c.mine && editC !== c.id) acts += '<button type="button" class="linkbtn" data-act="editC" data-id="' + c.id + '">編集</button>';
-        if ((c.mine || isAdmin()) && editC !== c.id) acts += '<button type="button" class="linkbtn danger' + (confirmC === c.id ? " confirm" : "") + '" data-act="delC" data-id="' + c.id + '">' + (confirmC === c.id ? "本当に削除" : "削除") + "</button>";
+        if (c.mine && editC !== c.id) acts += editBtn('data-act="editC" data-id="' + c.id + '"', true);
+        if ((c.mine || isAdmin()) && editC !== c.id) acts += delBtn('data-act="delC" data-id="' + c.id + '"', confirmC === c.id, "削除", true);
         var body = editC === c.id
-          ? '<div class="cedit"><textarea id="ecBody" maxlength="2000">' + esc(c.body) + '</textarea><div class="acts" style="margin-top:6px"><button type="button" class="ghost" data-act="saveC" data-id="' + c.id + '">保存</button><button type="button" class="linkbtn" data-act="cancelC">キャンセル</button></div></div>'
+          ? '<div class="cedit"><textarea id="ecBody" maxlength="2000">' + esc(c.body) + '</textarea><div class="acts" style="margin-top:6px"><button type="button" class="ghost" data-act="saveC" data-id="' + c.id + '">保存</button><button type="button" class="abtn" data-act="cancelC">キャンセル</button></div></div>'
           : (c.body ? '<div class="cbody">' + esc(c.body) + "</div>" : "");
         return '<li><div class="chead"><span class="cname">' + esc(c.author || "名無しさん") + '</span><span class="badge" data-r="' + esc(c.role) + '">' + esc(ROLE_LABEL[c.role] || "") +
           '</span><span class="mono">' + fmt(c.created_at) + '</span>' + (acts ? '<span class="cact">' + acts + "</span>" : "") + '</div>' + body + gal(c.images) + "</li>";
