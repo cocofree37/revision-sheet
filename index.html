@@ -266,13 +266,12 @@
 
     <div class="toolbar">
       <input type="search" id="q" placeholder="内容・ページ・報告者で検索" maxlength="60" aria-label="検索">
-      <select id="fCat" aria-label="分類で絞り込み"></select>
-      <button type="button" class="primary" id="newBtn">＋ 修正を依頼する</button>
+      <button type="button" class="primary" id="newBtn">＋ コメントする</button>
     </div>
 
     <form class="panel" id="newForm" hidden>
-      <h3>修正を依頼する</h3>
-      <div class="field"><label for="nDetail">修正してほしい内容 <span class="req">必須</span></label><textarea id="nDetail" maxlength="3000" style="min-height:120px" placeholder="どこを、どう直したいかを、思いつくまま書いてください。題名や分類は自動で付きます。"></textarea></div>
+      <h3>コメントする</h3>
+      <div class="field"><label for="nDetail">コメント内容 <span class="req">必須</span></label><textarea id="nDetail" maxlength="3000" style="min-height:120px" placeholder="どこを、どう直したいかを、思いつくまま書いてください。題名は自動で付きます。"></textarea></div>
       <div class="autoline" id="nAuto" hidden></div>
       <div class="field">
         <span>画像（任意・5枚まで）</span>
@@ -285,7 +284,7 @@
       </div>
       <div class="field"><label for="nName">お名前</label><input type="text" id="nName" maxlength="40" placeholder="例）田中" autocomplete="off"></div>
       <div class="field"><label for="nPage">ページのURL・場所（わかれば）</label><input type="text" id="nPage" maxlength="300" placeholder="例）https://example.com/about　／　トップ > ヘッダー" autocomplete="off"></div>
-      <div class="row"><span class="hint">題名・分類・優先度は内容から自動で付けます（制作チームが後から直せます）</span><span><button type="button" class="linkbtn" id="newCancel">キャンセル</button> <button type="submit" class="primary">依頼を追加</button></span></div>
+      <div class="row"><span class="hint">題名と優先度は内容から自動で付けます（制作チームが後から直せます）</span><span><button type="button" class="linkbtn" id="newCancel">キャンセル</button> <button type="submit" class="primary">送信</button></span></div>
       <p class="err" id="nErr" hidden></p>
     </form>
 
@@ -493,20 +492,9 @@
   }
   async function toDataUrl(file) { return shrink(await createImageBitmap(file)); }
 
-  /* ---- 内容から題名・分類・優先度を自動で付ける ---- */
-  var CAT_RULES = [
-    ["機能・動作", ["動かない", "動作", "エラー", "押せない", "クリック", "リンク", "フォーム", "送信", "届かな", "表示されな", "開かな", "遅い", "ログイン", "検索", "バグ", "404", "繋がら", "つながら", "カート", "決済", "予約"]],
-    ["画像・写真", ["画像", "写真", "バナー", "ロゴ", "アイコン", "イラスト", "スライド", "サムネ", "背景画像", "動画", "差し替え画像"]],
-    ["文言・テキスト", ["文言", "テキスト", "文章", "誤字", "脱字", "表記", "文字", "コピー", "キャッチ", "見出し", "書き換", "書き直", "電話番号", "住所", "料金", "価格", "金額", "営業時間", "社名", "日付", "説明文", "タイトル", "メールアドレス"]],
-    ["デザイン", ["色", "カラー", "フォント", "余白", "レイアウト", "配置", "大きく", "小さく", "サイズ", "ボタン", "見た目", "デザイン", "太く", "細く", "行間", "ずれ", "揃", "崩れ", "スマホ", "レスポンシブ", "ヘッダー", "フッター", "メニュー"]]
-  ];
+  /* ---- 内容から題名・優先度を自動で付ける ---- */
   function autoFill(text) {
     var t = (text || "").replace(/\r/g, "").trim();
-    var cat = "その他", best = 0;
-    CAT_RULES.forEach(function (r) {
-      var n = r[1].reduce(function (a, k) { return a + (t.indexOf(k) >= 0 ? 1 : 0); }, 0);
-      if (n > best) { best = n; cat = r[0]; }
-    });
     var pr = /至急|急ぎで|急いで|緊急|今日中|本日中|すぐ(に)?|早急|できるだけ早く/.test(t) ? "高" : /急ぎません|いつでも|余裕|時間があれば/.test(t) ? "低" : "中";
     var parts = t.split(/[。．！!？?\n]+/).map(function (x) { return x.trim(); }).filter(Boolean);
     var greet = /^(お世話になっております|お世話になります|いつもありがとうございます|お疲れ様です|お疲れさまです)[、,。 ]*/;
@@ -515,7 +503,7 @@
     if (title.length < 8 && parts[1]) title += "、" + parts[1];
     title = title.replace(/(を|は|が)?(お願い(いたし|致し)?ます|お願いできますか|(し)?て(ください|下さい|ほしいです|ほしい|もらいたいです|もらいたい)|したいです|したいと思います|したい|ください|下さい)$/, "").trim();
     if (title.length > 38) title = title.slice(0, 38) + "…";
-    return { title: title || "（画像・内容を確認）", category: cat, priority: pr };
+    return { title: title || "（画像・内容を確認）", priority: pr };
   }
   function Attach(k, formSel, errSel) {
     var list = [], marked = [], MAX = 5;
@@ -691,19 +679,18 @@
     var q = view.q.toLowerCase();
     var list = all.filter(function (i) {
       if (view.status !== "all" && i.status !== view.status) return false;
-      if (view.cat !== "all" && i.category !== view.cat) return false;
       if (q && (i.title + " " + i.page_url + " " + i.reporter).toLowerCase().indexOf(q) < 0) return false;
       return true;
     });
-    if (!all.length) { $("#rows").innerHTML = '<p class="empty">まだ修正依頼はありません。「＋ 修正を依頼する」から追加してください。</p>'; return; }
+    if (!all.length) { $("#rows").innerHTML = '<p class="empty">まだコメントはありません。「＋ コメントする」から追加してください。</p>'; return; }
     if (!list.length) { $("#rows").innerHTML = '<p class="empty">条件に合う依頼はありません。</p>'; return; }
     $("#rows").innerHTML = list.map(function (i) {
-      var sub = [i.category];
+      var sub = [];
       if (i.page_url) sub.push(i.page_url);
       if (i.image_count) sub.push("画像 " + i.image_count);
       if (i.comment_count) sub.push("コメント " + i.comment_count);
       return '<button type="button" class="row-i" data-no="' + i.no + '"><span class="c-no mono">#' + i.no + "</span>" +
-        '<span class="c-main"><span class="ttl">' + esc(i.title) + '</span><span class="sub">' + esc(sub.join(" ・ ")) + "</span></span>" +
+        '<span class="c-main"><span class="ttl">' + esc(i.title) + '</span>' + (sub.length ? '<span class="sub">' + esc(sub.join(" ・ ")) + "</span>" : "") + "</span>" +
         '<span class="prio" data-p="' + esc(i.priority) + '">' + esc(i.priority) + "</span>" +
         '<span class="pill" data-s="' + esc(i.status) + '">' + esc(i.status) + "</span>" +
         '<span class="c-when mono">' + esc(i.reporter || "―") + "<br>" + fmt(i.updated_at) + "</span></button>";
@@ -713,8 +700,6 @@
 
   $("#chips").addEventListener("click", function (e) { var b = e.target.closest(".chip"); if (b) { view.status = b.dataset.status; renderList(); } });
   $("#q").addEventListener("input", function () { view.q = $("#q").value.trim(); renderList(); });
-  $("#fCat").innerHTML = '<option value="all">すべての分類</option>' + CATEGORIES.map(function (c) { return "<option>" + c + "</option>"; }).join("");
-  $("#fCat").addEventListener("change", function () { view.cat = $("#fCat").value; renderList(); });
   $("#rows").addEventListener("click", function (e) { var r = e.target.closest(".row-i"); if (r) location.hash = "#/p/" + encodeURIComponent(S.key) + "/" + r.dataset.no; });
 
   /* 案件情報の編集（制作チームのみ） */
@@ -733,7 +718,7 @@
     var t = $("#nDetail").value.trim(), box = $("#nAuto");
     if (!t) { box.hidden = true; return; }
     var a = autoFill(t);
-    box.innerHTML = "自動で付く内容　題名：<b>" + esc(a.title) + "</b>　／　分類：<b>" + esc(a.category) + "</b>　／　優先度：<b>" + esc(a.priority) + "</b>";
+    box.innerHTML = "自動で付く内容　題名：<b>" + esc(a.title) + "</b>　／　優先度：<b>" + esc(a.priority) + "</b>";
     box.hidden = false;
   });
   $("#newBtn").addEventListener("click", function () {
@@ -744,14 +729,14 @@
   $("#newForm").addEventListener("submit", async function (e) {
     e.preventDefault();
     var detail = $("#nDetail").value.trim(), imgs = nAtt.get(), err = $("#nErr");
-    if (!detail && !imgs.length) { err.textContent = "修正してほしい内容を入力してください（画像だけでも送れます）。"; err.hidden = false; return; }
+    if (!detail && !imgs.length) { err.textContent = "コメント内容を入力してください（画像だけでも送れます）。"; err.hidden = false; return; }
     err.hidden = true;
     var auto = autoFill(detail), name = $("#nName").value.trim(), btn = e.submitter || $("#newForm button[type=submit]");
     lsSet("shuusei-name", name);
     btn.disabled = true;
     try {
       var no = await rpc("add_issue", { p_key: S.key, p_title: detail ? auto.title : "画像での修正依頼", p_page_url: $("#nPage").value.trim(), p_detail: detail,
-        p_category: auto.category, p_priority: auto.priority, p_reporter: name, p_images: imgs });
+        p_category: "その他", p_priority: auto.priority, p_reporter: name, p_images: imgs });
       $("#nPage").value = ""; $("#nDetail").value = ""; $("#nAuto").hidden = true; nAtt.clear(); $("#newForm").hidden = true;
       location.hash = "#/p/" + encodeURIComponent(S.key) + "/" + no;
     } catch (ex) { err.textContent = errMsg(ex); err.hidden = false; }
@@ -769,7 +754,7 @@
     var i = S.cur;
     var h = '<div class="ihead"><span class="mono c-no">#' + i.no + '</span><span class="pill" data-s="' + esc(i.status) + '">' + esc(i.status) + "</span></div>" +
       '<h2 class="ititle">' + esc(i.title) + "</h2>" +
-      '<dl class="facts"><dt>分類</dt><dd>' + esc(i.category) + "</dd><dt>優先度</dt><dd>" + esc(i.priority) + "</dd>" +
+      '<dl class="facts"><dt>優先度</dt><dd>' + esc(i.priority) + "</dd>" +
       "<dt>対象</dt><dd>" + (isHttp(i.page_url) ? '<a href="' + esc(i.page_url) + '" target="_blank" rel="noopener noreferrer">' + esc(i.page_url) + " ↗</a>" : esc(i.page_url || "―")) + "</dd>" +
       "<dt>報告者</dt><dd>" + esc(i.reporter || "―") + "</dd><dt>依頼日</dt><dd class='mono'>" + fmtFull(i.created_at) + "</dd>" +
       "<dt>担当</dt><dd>" + esc(i.assignee || "未定") + "</dd></dl>" +
@@ -778,7 +763,6 @@
       h += '<div class="ctrl"><div class="field" style="flex:1 1 100%"><label for="sTitle">題名（自動で付いたものを直せます）</label><input type="text" id="sTitle" data-field="title" value="' + esc(i.title) + '" maxlength="120"></div>' +
         '<div class="field"><label for="sStatus">状態</label><select id="sStatus" data-field="status">' + opts(STATUSES, i.status) + "</select></div>" +
         '<div class="field"><label for="sPrio">優先度</label><select id="sPrio" data-field="priority">' + opts(["高", "中", "低"], i.priority) + "</select></div>" +
-        '<div class="field"><label for="sCat">分類</label><select id="sCat" data-field="category">' + opts(CATEGORIES, i.category) + "</select></div>" +
         '<div class="field"><label for="sAssign">担当</label><input type="text" id="sAssign" data-field="assignee" value="' + esc(i.assignee) + '" maxlength="40" style="width:9em"></div>' +
         '<div class="acts"><button type="button" class="linkbtn danger' + (confirmDel ? " confirm" : "") + '" data-act="del">' + (confirmDel ? "本当に削除" : "この依頼を削除") + "</button></div></div>";
     } else if (i.status === "確認待ち") {
@@ -847,9 +831,9 @@
 
   /* CSV */
   $("#expCsv").addEventListener("click", function () {
-    var rows = [["No", "内容", "対象", "分類", "優先度", "状態", "報告者", "担当", "コメント数", "画像数", "依頼日", "更新日"]];
+    var rows = [["No", "内容", "対象", "優先度", "状態", "報告者", "担当", "コメント数", "画像数", "依頼日", "更新日"]];
     S.issues.slice().sort(function (a, b) { return a.no - b.no; }).forEach(function (i) {
-      rows.push([i.no, i.title, i.page_url, i.category, i.priority, i.status, i.reporter, i.assignee, i.comment_count, i.image_count, fmtFull(i.created_at), fmtFull(i.updated_at)]);
+      rows.push([i.no, i.title, i.page_url, i.priority, i.status, i.reporter, i.assignee, i.comment_count, i.image_count, fmtFull(i.created_at), fmtFull(i.updated_at)]);
     });
     var csv = rows.map(function (r) { return r.map(function (v) { return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; }).join(","); }).join("\r\n");
     var a = document.createElement("a"), d = new Date();

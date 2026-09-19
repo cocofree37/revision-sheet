@@ -111,11 +111,25 @@ begin
   return p;
 end $$;
 
+-- 案件キーは英小文字+数字の16文字（約82ビット）。推測は現実的に不可能です。
+-- uuid の固定ビット（version / variant）を避けて、16バイト分の乱数から作ります。
 create or replace function public._new_key()
 returns text
-language sql volatile set search_path = public, pg_temp as $$
-  select replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '');
-$$;
+language plpgsql volatile set search_path = public, pg_temp as $$
+declare
+  chars constant text := 'abcdefghijklmnopqrstuvwxyz0123456789';
+  u1 text := replace(gen_random_uuid()::text, '-', '');
+  u2 text := replace(gen_random_uuid()::text, '-', '');
+  b bytea;
+  r text := '';
+  i int;
+begin
+  b := decode(substr(u1, 1, 12) || substr(u1, 14, 3) || substr(u1, 18) || substr(u2, 1, 2), 'hex');
+  for i in 0..15 loop
+    r := r || substr(chars, (get_byte(b, i) % 36) + 1, 1);
+  end loop;
+  return r;
+end $$;
 
 -- ---------------------------------------------------------------- 案件キーで使う関数
 create or replace function public.get_project(p_key text)
