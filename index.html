@@ -1101,9 +1101,12 @@
     if (x && x.email) { $("#userEmail").textContent = x.email; b.hidden = false; } else b.hidden = true;
   }
   function logout() {
+    /* ログアウトしたら、いま見ていた案件の Top に戻す（クライアント用URLなら、その案件のログイン画面になる） */
+    var key = S.key || lsGet("rs-last"), onMaster = location.hash.indexOf("#/master") === 0;
     sessSet(null); mkey = ""; ssSet("rs-master", ""); S.key = null; S.proj = null; S.issues = []; S.cur = null;
     renderUser();
-    if (location.hash === "#/" || location.hash === "") route(); else location.hash = "#/";
+    var to = onMaster ? "#/master" : (/^[A-Za-z0-9_-]+$/.test(key || "") ? "#/p/" + key : "#/");
+    if (location.hash === to) route(); else location.hash = to;
   }
   function showLogin(reason, back) {
     loginBack = back || "#/";
