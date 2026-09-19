@@ -51,7 +51,7 @@ Webサイト制作の課題管理表。クライアントがサイトを見て�
   1. `supabase/migrations/002_email_auth.sql`、続けて `003_login_required.sql` を SQL Editor で実行します（新規インストールは `schema.sql` に含まれています）。
   2. Supabase の Authentication → URL Configuration で、**Site URL** に、このサイトのURL（例：`https://<ユーザー名>.github.io/<リポジトリ名>/`）を、**Redirect URLs** に、同じURLの末尾に `**` を付けたもの（例：`https://<ユーザー名>.github.io/<リポジトリ名>/**`）を登録します。メールのリンクを開いたあと、このサイトに戻るために必要です（未設定だと `localhost:3000` に飛びます）。
   3. 管理画面（マスターキーで入れます）で、制作チームのメールアドレスを登録します。
-- **メールを日本語にする**：Supabase の標準メールは英語で、文面は編集できません。独自の SMTP（Resend、Google Workspace など）を設定すると、Authentication → Emails → Templates で文面を編集できます。日本語の文面は、次のファイルに用意しています。
+- **メールを日本語にする**（この案件では設定済み）：Supabase の標準メールは英語で、文面は編集できません。独自の SMTP（Resend、Google Workspace など）を設定すると、Authentication → Emails → Templates で文面を編集できます。日本語の文面は、次のファイルに用意しています。
   - `supabase/email-templates/magic-link.html`（「Magic link or OTP」に貼り付け）
   - `supabase/email-templates/confirm-signup.html`（「Confirm sign up」に貼り付け。初めてのメールアドレスには、こちらが使われます）
 - **リンクが「無効または期限切れ」になるとき**：リンクは一度しか使えません。メールソフトによっては、リンクの安全確認のために、先にリンクを開いてしまい、無効になることがあります。その場合は、もう一度送り、届いたらすぐに開いてください。

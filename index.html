@@ -451,8 +451,8 @@
     network: "通信できませんでした。ネットワークをご確認ください。",
     invalid_email: "メールアドレスの形式を確認してください。",
     too_many: "メールアドレスが多すぎます（1案件100件まで）。",
-    over_email_send_rate_limit: "メールの送信回数の上限に達しました。しばらくしてからお試しください。",
-    over_request_rate_limit: "操作が多すぎます。しばらくしてからお試しください。",
+    over_email_send_rate_limit: "メールの送信回数の上限に達しました。1時間ほど待ってから、もう一度お試しください。すでにログイン用のメールが届いている場合は、そのメールのリンクを開いてください（新しく送り直す必要はありません）。",
+    over_request_rate_limit: "続けて送信できません。1分ほど待ってから、もう一度お試しください。",
     email_address_invalid: "このメールアドレスは使えません。",
     email_address_not_authorized: "このメールアドレスには、いまはメールを送れません。制作チームにご連絡ください。"
   };
@@ -506,8 +506,10 @@
   }
   /* ログイン用のリンクをメールで送る。リンクを開くと、このサイトに戻ってくる */
   async function sendLoginLink(email, backHash) {
-    try { localStorage.setItem("rs-return", backHash || "#/"); } catch (e) {}
-    var to = /^#\/(p\/[A-Za-z0-9_-]+(\/\d+)?|master)$/.test(backHash || "") ? "?to=" + encodeURIComponent(backHash.slice(1)) : "";
+    var mm = /^#\/(p\/[A-Za-z0-9_-]+)(\/\d+)?$/.exec(backHash || "");
+    var top = mm ? "#/" + mm[1] : (backHash === "#/master" ? "#/master" : "#/");   /* 案件の Top（一覧）に戻す */
+    try { localStorage.setItem("rs-return", top); } catch (e) {}
+    var to = top === "#/" ? "" : "?to=" + encodeURIComponent(top.slice(1));
     await authPost("otp?redirect_to=" + encodeURIComponent(location.href.split("#")[0].split("?")[0] + to), { email: email, create_user: true });
   }
   async function freshToken() {
@@ -526,6 +528,9 @@
     var to = new URLSearchParams(location.search).get("to");
     if (to && /^\/(p\/[A-Za-z0-9_-]+(\/\d+)?|master)$/.test(to)) back = "#" + to;   /* 別のブラウザで開いたときも、元の画面に戻る */
     if (!/^#\//.test(back)) back = "#/";
+    var pm = /^#\/p\/([A-Za-z0-9_-]+)/.exec(back);
+    if (pm) back = "#/p/" + pm[1];                                   /* 個別の依頼ではなく、案件の Top へ */
+    else if (back === "#/") { var last = lsGet("rs-last"); if (/^[A-Za-z0-9_-]+$/.test(last)) back = "#/p/" + last; }   /* 行き先が不明なら、最後に開いた案件へ */
     if (q.get("access_token")) {
       sessSet({ access_token: q.get("access_token"), refresh_token: q.get("refresh_token") || "",
         expires_at: Number(q.get("expires_at")) || (Math.floor(Date.now() / 1000) + (Number(q.get("expires_in")) || 3600)),
@@ -1147,6 +1152,7 @@
     var parts = location.hash.replace(/^#\/?/, "").split("/");
     if (parts[0] === "p" && parts[1]) {
       var key = decodeURIComponent(parts[1]);
+      if (/^[A-Za-z0-9_-]+$/.test(key)) lsSet("rs-last", key);
       try { if (S.key !== key || !S.proj) await loadProject(key); }
       catch (e) {
         if (my !== routing) return; S.key = null; S.proj = null;
