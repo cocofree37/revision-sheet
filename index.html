@@ -282,6 +282,7 @@
       <p class="hint">メールに書かれたリンクを開くと、ログインできます（リンクは一度だけ使えます）。届かないときは、迷惑メールのフォルダもご確認ください。</p>
       <div class="row"><button type="button" class="linkbtn" id="lgBack">メールアドレスを入力し直す</button><button type="button" class="ghost" id="lgResend">再送する</button></div>
     </div>
+    <p id="lgSkipBox" hidden><button type="button" class="ghost" id="lgSkip">ログインせずに続ける</button></p>
     <p><button type="button" class="linkbtn" id="lgOut" hidden>ログアウトして、別のメールアドレスで入り直す</button></p>
   </section>
 
@@ -1104,8 +1105,10 @@
     $("#loginLead").textContent = reason === "not_allowed"
       ? "ログイン中のメールアドレス（" + (x ? x.email : "") + "）には、この案件を開く権限がありません。許可されたメールアドレスで入り直してください。"
       : reason === "staff" ? "制作チームの方は、登録したメールアドレスでログインしてください。"
+      : reason === "prompt" ? "メールアドレスでログインしてください。ログインしなくても、この案件を見たり、書き込んだりすることはできます。"
       : "この案件は、許可されたメールアドレスの方だけが開けます。メールアドレスを入力してください。";
     $("#lgOut").hidden = !(x && x.email);
+    $("#lgSkipBox").hidden = reason !== "prompt";
     $("#lgForm").hidden = false; $("#lgSent").hidden = true;
     var er = $("#lgErr"); er.textContent = authFlash; er.hidden = !authFlash; authFlash = "";
   }
@@ -1136,6 +1139,11 @@
   $("#lgBack").addEventListener("click", function () { $("#lgSent").hidden = true; $("#lgForm").hidden = false; });
   $("#lgOut").addEventListener("click", function () { sessSet(null); renderUser(); showLogin("auth_required", loginBack); });
   $("#logoutBtn").addEventListener("click", logout);
+  /* キーだけで入れる案件では、ログインせずに続けられる（このタブを閉じるまで、もう聞かない） */
+  $("#lgSkip").addEventListener("click", function () {
+    if (S.key) ssSet("rs-skip-" + S.key, "1");
+    route();
+  });
 
   /* ============ ルーティング ============ */
   var routing = 0;
@@ -1151,6 +1159,7 @@
         showHome(errMsg(e)); return;
       }
       if (my !== routing) return;
+      if (!sessGet() && S.proj.role === "client" && !ssGet("rs-skip-" + key)) { showLogin("prompt", location.hash); return; }
       if (parts[2] && /^\d+$/.test(parts[2])) await showIssue(parseInt(parts[2], 10)); else showList();
     } else if (parts[0] === "master") showMaster();
     else if (parts[0] === "login") showLogin("staff", "#/master");
