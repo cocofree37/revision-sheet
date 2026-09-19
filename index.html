@@ -4,217 +4,252 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>修正依頼シート</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Antique&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@1,400&family=Noto+Sans+JP:wght@300;400;500&family=Open+Sans:wght@300;400;600&display=swap">
 <style>
   :root {
     color-scheme: light dark;
-    --paper: #eceef3; --surface: #f7f8fb; --surface-2: #ffffff;
-    --ink: #18202e; --muted: #626b82; --rule: #d2d8e4;
-    --accent: #27519b; --accent-soft: #dfe6f5; --on-accent: #ffffff;
-    --signal: #b8472f;
-    --s-todo: #b8472f; --s-doing: #27519b; --s-wait: #9a6a00; --s-done: #2f7a4f; --s-hold: #69728a;
-    --s-todo-bg: #f6e2dc; --s-doing-bg: #dfe6f5; --s-wait-bg: #f5ead0; --s-done-bg: #dcefe3; --s-hold-bg: #e4e7ee;
+    --paper: #ffffff; --surface: #f6f6f4; --surface-2: #ffffff;
+    --ink: #333333; --muted: #777774; --rule: #e4e4e1; --rule-strong: #c8c8c4;
+    --accent: #333333; --accent-soft: #efefec; --on-accent: #ffffff;
+    --bar: #333333; --on-bar: #ffffff;
+    --signal: #a9463a; --signal-soft: #f6ebe9;
+    --s-todo: #b5493b; --s-doing: #3f6fae; --s-wait: #a5762a; --s-done: #4b855f; --s-hold: #9a9a95;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --paper: #121722; --surface: #19202c; --surface-2: #1d2532;
-      --ink: #e4e8f0; --muted: #8e98ac; --rule: #2a3342;
-      --accent: #7ea6ea; --accent-soft: #1f2b40; --on-accent: #121722;
-      --signal: #e2795c;
-      --s-todo: #f0917a; --s-doing: #86aaea; --s-wait: #e0b552; --s-done: #6cc493; --s-hold: #9aa4b8;
-      --s-todo-bg: #3a2320; --s-doing-bg: #1f2b40; --s-wait-bg: #382d14; --s-done-bg: #16301f; --s-hold-bg: #262d3b;
+      --paper: #181818; --surface: #212120; --surface-2: #1d1d1c;
+      --ink: #ebebe8; --muted: #9a9a95; --rule: #2f2f2d; --rule-strong: #4a4a47;
+      --accent: #ebebe8; --accent-soft: #2a2a28; --on-accent: #181818;
+      --bar: #0f0f0f; --on-bar: #ebebe8;
+      --signal: #e08a7c; --signal-soft: #33211e;
+      --s-todo: #ec8f80; --s-doing: #86aee6; --s-wait: #dcb05a; --s-done: #74c294; --s-hold: #9a9a95;
     }
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --paper: #121722; --surface: #19202c; --surface-2: #1d2532;
-    --ink: #e4e8f0; --muted: #8e98ac; --rule: #2a3342;
-    --accent: #7ea6ea; --accent-soft: #1f2b40; --on-accent: #121722;
-    --signal: #e2795c;
-    --s-todo: #f0917a; --s-doing: #86aaea; --s-wait: #e0b552; --s-done: #6cc493; --s-hold: #9aa4b8;
-    --s-todo-bg: #3a2320; --s-doing-bg: #1f2b40; --s-wait-bg: #382d14; --s-done-bg: #16301f; --s-hold-bg: #262d3b;
+    --paper: #181818; --surface: #212120; --surface-2: #1d1d1c;
+    --ink: #ebebe8; --muted: #9a9a95; --rule: #2f2f2d; --rule-strong: #4a4a47;
+    --accent: #ebebe8; --accent-soft: #2a2a28; --on-accent: #181818;
+    --bar: #0f0f0f; --on-bar: #ebebe8;
+    --signal: #e08a7c; --signal-soft: #33211e;
+    --s-todo: #ec8f80; --s-doing: #86aee6; --s-wait: #dcb05a; --s-done: #74c294; --s-hold: #9a9a95;
   }
 
   * { box-sizing: border-box; }
   html, body { min-height: 100%; }
   body {
     margin: 0; background: var(--paper); color: var(--ink);
-    font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", system-ui, sans-serif;
-    font-size: 15px; line-height: 1.7; -webkit-font-smoothing: antialiased;
+    font-family: "Open Sans", "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", system-ui, sans-serif;
+    font-size: 15px; font-weight: 400; line-height: 1.9; letter-spacing: .03em;
+    -webkit-font-smoothing: antialiased;
   }
-  .wrap { width: 100%; max-width: 980px; margin: 0 auto; padding-inline: 16px; }
-  main.wrap { padding-block: 0 72px; }
-  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
-  .label { font-size: 11px; letter-spacing: .16em; color: var(--muted); font-weight: 500; }
-  button, input, select, textarea { font: inherit; color: inherit; }
+  .wrap { width: 100%; max-width: 960px; margin: 0 auto; padding-inline: 24px; }
+  main.wrap { padding-block: 0 120px; }
+  .mono { font-family: "Open Sans", "Noto Sans JP", sans-serif; font-variant-numeric: tabular-nums; letter-spacing: .06em; }
+  .label { font-size: 11px; letter-spacing: .22em; color: var(--muted); font-weight: 600; }
+  .eyebrow { display: block; font-family: "Bodoni Moda", "Noto Serif JP", serif; font-style: italic; font-weight: 400; font-size: 16px; letter-spacing: .06em; color: var(--muted); margin-bottom: 4px; }
+  button, input, select, textarea { font: inherit; letter-spacing: inherit; color: inherit; }
   button { cursor: pointer; }
-  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 2px; }
   [hidden] { display: none !important; }
-
-  header.top { border-bottom: 1px solid var(--rule); background: var(--paper); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
-  .top-in { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; padding-block: 12px; }
-  .brand { font-family: "Zen Antique", "Hiragino Mincho ProN", serif; font-size: 21px; letter-spacing: .06em; margin: 0; font-weight: 400; }
-  .top-in .sp { flex: 1; }
-  .role { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
-  .role select { background: var(--surface-2); border: 1px solid var(--rule); border-radius: 2px; padding: 3px 8px; font-size: 13px; }
-
-  .notice { margin-block: 16px 0; padding: 10px 14px; border-left: 3px solid var(--signal); background: var(--surface); color: var(--muted); font-size: 13px; }
-
-  .proj { display: flex; align-items: baseline; gap: 6px 16px; flex-wrap: wrap; margin-block: 22px 4px; }
-  .proj h2 { font-family: "Zen Antique", "Hiragino Mincho ProN", serif; font-weight: 400; font-size: 22px; margin: 0; line-height: 1.4; overflow-wrap: anywhere; text-wrap: balance; }
-  .proj a { color: var(--accent); font-size: 13px; overflow-wrap: anywhere; }
-  .linkbtn { background: none; border: 0; padding: 0; color: var(--muted); font-size: 12.5px; }
-  .linkbtn:hover { color: var(--accent); text-decoration: underline; }
-  .linkbtn.danger:hover, .linkbtn.confirm { color: var(--signal); }
-  .ghost { background: none; border: 1px solid var(--rule); color: var(--accent); border-radius: 2px; padding: 6px 14px; font-size: 13px; }
-  .ghost:hover { background: var(--accent-soft); }
-  .primary { background: var(--accent); color: var(--on-accent); border: 0; border-radius: 2px; padding: 8px 20px; font-weight: 500; font-size: 14px; letter-spacing: .04em; }
-  .primary:hover { filter: brightness(1.08); }
-
-  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-block: 14px 12px; }
-  .chip { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 2px 12px; font-size: 13px; color: var(--ink); }
-  .chip .n { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; margin-left: 5px; color: var(--muted); }
-  .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-  .chip[aria-pressed="true"] .n { color: inherit; }
-
-  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
-  .toolbar input[type="search"] { flex: 1; min-width: 180px; }
-  input[type="text"], input[type="search"], input[type="url"], select, textarea {
-    background: var(--surface-2); border: 1px solid var(--rule); border-radius: 2px; padding: 8px 10px; font-size: 14.5px; width: 100%;
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: no-preference) {
+    main > section:not([hidden]) { animation: rise .32s ease-out; }
   }
-  select { width: auto; }
-  textarea { resize: vertical; min-height: 84px; line-height: 1.7; }
-  .toolbar select { padding: 7px 10px; }
 
-  form.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 3px; padding: 16px; margin-bottom: 18px; }
-  form.panel h3 { margin: 0 0 12px; font-size: 15px; font-weight: 700; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
-  .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
-  .field > span, .field > label { font-size: 12px; color: var(--muted); }
-  .req { color: var(--signal); }
-  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
-  .hint { color: var(--muted); font-size: 12px; }
-  .err { color: var(--signal); font-size: 13px; margin: 8px 0 0; }
-  .attach { display: flex; gap: 6px 12px; align-items: center; flex-wrap: wrap; }
-  .thumbs { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
-  .th { position: relative; display: inline-block; }
-  .th { width: 150px; }
+  /* --- ヘッダー --- */
+  header.top { background: var(--bar); color: var(--on-bar); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+  .top-in { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; padding-block: 18px; }
+  .brand { font-size: 15px; font-weight: 400; letter-spacing: .32em; margin: 0; line-height: 1.4; }
+  .brand a { color: inherit; text-decoration: none; }
+  .top-in .sp { flex: 1; }
+  .notice { margin-block: 28px 0; padding: 14px 18px; background: var(--surface); color: var(--muted); font-size: 13px; }
+
+  /* --- ボタン・リンク --- */
+  .linkbtn { background: none; border: 0; padding: 0; color: var(--muted); font-size: 12.5px; letter-spacing: .06em; }
+  .linkbtn:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+  .linkbtn.danger:hover, .linkbtn.confirm { color: var(--signal); }
+  .ghost { background: transparent; border: 1px solid var(--rule-strong); color: var(--ink); border-radius: 999px; padding: 9px 22px; font-size: 13px; letter-spacing: .1em; transition: border-color .2s, background .2s; }
+  .ghost:hover { border-color: var(--ink); background: var(--surface); }
+  .primary { background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); border-radius: 999px; padding: 10px 30px; font-size: 13.5px; font-weight: 500; letter-spacing: .14em; transition: opacity .2s; }
+  .primary:hover { opacity: .82; }
+  .primary:disabled, .ghost:disabled { opacity: .45; cursor: not-allowed; }
+  .abtn { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 6px 16px; font-size: 13px; line-height: 1.4; color: var(--ink); white-space: nowrap; letter-spacing: .08em; transition: border-color .2s, background .2s; }
+  .abtn:hover { background: var(--surface); border-color: var(--ink); }
+  .abtn.sm { padding: 3px 12px; font-size: 12px; }
+  .abtn.danger { color: var(--signal); }
+  .abtn.danger:hover { background: var(--signal-soft); border-color: var(--signal); }
+  .abtn.danger.confirm { background: var(--signal); border-color: var(--signal); color: var(--on-accent); font-weight: 500; }
+  .abtn svg { flex: none; }
+  .acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  /* --- 案件の見出し --- */
+  .proj { display: flex; align-items: baseline; gap: 8px 20px; flex-wrap: wrap; margin-block: 0 8px; }
+  .proj h2 { font-weight: 300; font-size: 30px; letter-spacing: .08em; margin: 0; line-height: 1.5; overflow-wrap: anywhere; text-wrap: balance; }
+  .proj a { color: var(--muted); font-size: 12.5px; letter-spacing: .1em; overflow-wrap: anywhere; text-underline-offset: 3px; }
+  .proj a:hover { color: var(--ink); }
+  .head-block { margin-top: 64px; }
+
+  /* --- 絞り込み --- */
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-block: 28px 20px; }
+  .chip { background: transparent; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 5px 18px; font-size: 13px; color: var(--ink); letter-spacing: .08em; transition: background .2s, border-color .2s, color .2s; }
+  .chip:hover { border-color: var(--ink); }
+  .chip .n { font-size: 11.5px; margin-left: 8px; color: var(--muted); }
+  .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .chip[aria-pressed="true"] .n { color: inherit; opacity: .75; }
+  .toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 40px; }
+  .toolbar input[type="search"] { flex: 1; min-width: 200px; }
+
+  /* --- フォーム --- */
+  input[type="text"], input[type="search"], input[type="url"], input[type="password"], input[type="email"], select, textarea {
+    background: var(--surface-2); border: 1px solid var(--rule-strong); border-radius: 2px; padding: 11px 14px; font-size: 14.5px; width: 100%; transition: border-color .2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--ink); outline: none; }
+  input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; }
+  select { width: auto; }
+  textarea { resize: vertical; min-height: 96px; line-height: 1.8; }
+  form.panel { background: var(--surface); border: 0; border-radius: 2px; padding: 32px; margin-bottom: 40px; }
+  form.panel h3 { margin: 0 0 22px; font-size: 16px; font-weight: 500; letter-spacing: .12em; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+  .field > span, .field > label { font-size: 12px; color: var(--muted); letter-spacing: .1em; }
+  .req { color: var(--signal); margin-left: 6px; }
+  .row { display: flex; gap: 12px 16px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-top: 8px; }
+  .hint { color: var(--muted); font-size: 12px; letter-spacing: .04em; line-height: 1.7; }
+  .err { color: var(--signal); font-size: 13px; margin: 12px 0 0; }
+  .attach { display: flex; gap: 8px 14px; align-items: center; flex-wrap: wrap; }
+  .thumbs { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
+  .th { position: relative; display: inline-block; width: 150px; }
   .th img { display: block; width: 150px; height: 110px; object-fit: cover; border: 1px solid var(--rule); border-radius: 2px; }
-  .th.marked img { border-color: var(--accent); }
-  .th .mk { position: absolute; left: 6px; top: 6px; background: var(--accent); color: var(--on-accent); font-size: 11px; padding: 0 8px; border-radius: 8px; }
-  .th .x { position: absolute; top: -7px; right: -7px; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--rule); background: var(--surface-2); padding: 0; line-height: 1; font-size: 14px; }
-  .th .x:hover { color: var(--signal); }
-  form.drag { outline: 2px dashed var(--accent); outline-offset: 2px; }
-  .th .ann { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 6px; background: var(--accent); border: 0; border-radius: 3px; color: var(--on-accent); font-size: 13.5px; font-weight: 500; padding: 6px 0; }
-  .th .ann:hover { filter: brightness(1.1); }
-  .th.marked .ann { background: none; border: 1px solid var(--accent); color: var(--accent); }
-  .annhint { flex-basis: 100%; display: flex; gap: 8px; align-items: center; background: var(--accent-soft); border-left: 3px solid var(--accent); padding: 8px 12px; font-size: 13px; }
+  .th.marked img { border-color: var(--ink); }
+  .th .mk { position: absolute; left: 8px; top: 8px; background: var(--accent); color: var(--on-accent); font-size: 11px; padding: 0 10px; border-radius: 999px; letter-spacing: .08em; }
+  .th .x { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--rule-strong); background: var(--surface-2); padding: 0; line-height: 1; font-size: 14px; }
+  .th .x:hover { color: var(--signal); border-color: var(--signal); }
+  form.drag { outline: 1px dashed var(--ink); outline-offset: 4px; }
+  .th .ann { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 8px; background: var(--accent); border: 1px solid var(--accent); border-radius: 999px; color: var(--on-accent); font-size: 12.5px; letter-spacing: .08em; padding: 5px 0; }
+  .th .ann:hover { opacity: .82; }
+  .th.marked .ann { background: none; color: var(--ink); border-color: var(--rule-strong); }
+  .annhint { flex-basis: 100%; display: flex; gap: 10px; align-items: center; background: var(--surface-2); border-left: 2px solid var(--ink); padding: 12px 16px; font-size: 13px; }
   .annhint svg, .th .ann svg { flex: none; }
-  .autoline { background: var(--surface-2); border: 1px dashed var(--rule); border-radius: 2px; padding: 8px 10px; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .autoline { background: var(--surface-2); border: 1px dashed var(--rule-strong); border-radius: 2px; padding: 10px 14px; font-size: 13px; color: var(--muted); margin-bottom: 18px; }
   .autoline b { color: var(--ink); font-weight: 500; }
-  dialog#annDlg { border: 1px solid var(--rule); border-radius: 4px; background: var(--surface-2); color: var(--ink); padding: 14px; width: min(94vw, 900px); max-height: 94vh; }
-  dialog#annDlg::backdrop { background: rgba(10, 14, 22, .6); }
-  .ann-tools { display: flex; gap: 6px 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
-  .ann-tools .seg { display: flex; gap: 0; }
-  .ann-tools .seg button { border: 1px solid var(--rule); background: var(--surface); padding: 4px 12px; font-size: 13px; margin-left: -1px; }
-  .ann-tools .seg button:first-child { border-radius: 2px 0 0 2px; margin-left: 0; }
-  .ann-tools .seg button:last-child { border-radius: 0 2px 2px 0; }
+
+  /* --- 画像への書き込み --- */
+  dialog#annDlg { border: 0; border-radius: 4px; background: var(--paper); color: var(--ink); padding: 20px; width: min(94vw, 900px); max-height: 94vh; }
+  dialog#annDlg::backdrop { background: rgba(20, 20, 20, .62); }
+  .ann-tools { display: flex; gap: 8px 12px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  .ann-tools .seg { display: flex; }
+  .ann-tools .seg button { border: 1px solid var(--rule-strong); background: transparent; padding: 5px 16px; font-size: 13px; margin-left: -1px; letter-spacing: .08em; }
+  .ann-tools .seg button:first-child { border-radius: 999px 0 0 999px; margin-left: 0; }
+  .ann-tools .seg button:last-child { border-radius: 0 999px 999px 0; }
   .ann-tools .seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
-  .sw { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--rule); padding: 0; }
-  .sw[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
-  #annText { width: 11em; padding: 5px 8px; font-size: 13px; }
+  .sw { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--paper); box-shadow: 0 0 0 1px var(--rule-strong); padding: 0; }
+  .sw[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+  #annText { width: 11em; padding: 6px 10px; font-size: 13px; }
   .ann-stage { overflow: auto; max-height: 64vh; border: 1px solid var(--rule); background: var(--surface); text-align: center; }
   #annCv { max-width: 100%; height: auto; touch-action: none; cursor: crosshair; display: block; margin: 0 auto; }
 
-  /* 一覧 */
-  .list-head, .row-i { display: grid; grid-template-columns: 3.4em minmax(0, 1fr) 4em 6.2em 9em; gap: 12px; align-items: center; }
-  .list-head { padding: 6px 8px; border-bottom: 1px solid var(--rule); color: var(--muted); font-size: 11.5px; letter-spacing: .1em; }
+  /* --- 一覧 --- */
+  .list-head, .row-i { display: grid; grid-template-columns: 3em minmax(0, 1fr) 3.6em 6.8em 7.6em; gap: 14px; align-items: center; }
+  #listView.adm .list-head, #listView.adm .row-i { grid-template-columns: 3em minmax(0, 1fr) 3.6em 6.8em 7.6em 7.6em; }
+  .list-head { padding: 0 12px 12px; border-bottom: 1px solid var(--ink); color: var(--muted); font-size: 11px; letter-spacing: .14em; white-space: nowrap; }
   .rows { border-bottom: 1px solid var(--rule); }
-  .row-i { width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--rule); padding: 11px 8px; }
-  .rw { position: relative; }
+  .row-i { width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--rule); padding: 26px 12px; transition: background .2s; }
   .rw:first-child .row-i { border-top: 0; }
-  .rdel { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 1; }
-  .acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .abtn { display: inline-flex; align-items: center; gap: 5px; background: var(--surface-2); border: 1px solid var(--rule); border-radius: 3px; padding: 5px 12px; font-size: 13px; line-height: 1.4; color: var(--accent); white-space: nowrap; }
-  .abtn:hover { background: var(--accent-soft); border-color: var(--accent); }
-  .abtn.sm { padding: 2px 9px; font-size: 12.5px; }
-  .abtn.danger { color: var(--signal); }
-  .abtn.danger:hover { background: var(--s-todo-bg); border-color: var(--signal); }
-  .abtn.danger.confirm { background: var(--signal); border-color: var(--signal); color: var(--on-accent); font-weight: 500; }
-  .abtn svg { flex: none; }
-  #listView.adm .list-head, #listView.adm .row-i { grid-template-columns: 3.4em minmax(0, 1fr) 4em 6.2em 9em 8.2em; }
   .row-i:hover { background: var(--surface); }
-  .c-no { color: var(--muted); font-size: 13px; }
-  .ttl { display: block; font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; }
-  .sub { display: block; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
-  .prio { font-size: 13px; }
-  .prio[data-p="高"] { color: var(--signal); font-weight: 700; }
-  .prio[data-p="低"] { color: var(--muted); }
-  .c-when { font-size: 12px; color: var(--muted); line-height: 1.5; }
-  .pill { display: inline-block; font-size: 12px; font-weight: 500; padding: 1px 10px; border-radius: 10px; white-space: nowrap; }
-  .pill[data-s="未対応"] { color: var(--s-todo); background: var(--s-todo-bg); }
-  .pill[data-s="対応中"] { color: var(--s-doing); background: var(--s-doing-bg); }
-  .pill[data-s="確認待ち"] { color: var(--s-wait); background: var(--s-wait-bg); }
-  .pill[data-s="完了"] { color: var(--s-done); background: var(--s-done-bg); }
-  .pill[data-s="保留"] { color: var(--s-hold); background: var(--s-hold-bg); }
-  .empty { color: var(--muted); padding: 28px 8px; font-size: 14px; }
+  .rw { position: relative; }
+  .rdel { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); z-index: 1; }
+  .c-no { color: var(--muted); font-size: 13px; font-weight: 300; }
+  .ttl { display: block; font-size: 16px; font-weight: 400; line-height: 1.7; letter-spacing: .05em; overflow-wrap: anywhere; }
+  .sub { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; overflow-wrap: anywhere; }
+  .prio { font-size: 12.5px; color: var(--muted); letter-spacing: .1em; }
+  .prio[data-p="高"] { color: var(--ink); font-weight: 600; }
+  .prio[data-p="低"] { opacity: .65; }
+  .c-when { font-size: 12px; color: var(--muted); line-height: 1.7; }
+  .pill { display: inline-flex; align-items: center; gap: 9px; font-size: 12.5px; letter-spacing: .1em; white-space: nowrap; color: var(--ink); }
+  .pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--s-hold); flex: none; }
+  .pill[data-s="未対応"]::before { background: var(--s-todo); }
+  .pill[data-s="対応中"]::before { background: var(--s-doing); }
+  .pill[data-s="確認待ち"]::before { background: var(--s-wait); }
+  .pill[data-s="完了"]::before { background: var(--s-done); }
+  .pill[data-s="保留"]::before { background: var(--s-hold); }
+  .empty { color: var(--muted); padding: 48px 12px; font-size: 14px; }
+  .skeleton { color: var(--muted); font-size: 13px; padding: 40px 12px; }
 
-  /* 詳細 */
-  .back { background: none; border: 0; padding: 2px 0; color: var(--accent); font-size: 13px; margin-block: 18px 6px; }
-  .back:hover { text-decoration: underline; }
-  h2.ititle { font-family: "Zen Antique", "Hiragino Mincho ProN", serif; font-weight: 400; font-size: 22px; margin: 4px 0 12px; line-height: 1.5; overflow-wrap: anywhere; text-wrap: balance; }
-  .ihead { display: flex; gap: 10px; align-items: center; }
-  dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0 0 14px; font-size: 13.5px; }
-  dl.facts dt { color: var(--muted); }
+  /* --- 詳細 --- */
+  .back { background: none; border: 0; padding: 2px 0; color: var(--muted); font-size: 13px; letter-spacing: .1em; margin-block: 36px 20px; }
+  .back:hover { color: var(--ink); }
+  h2.ititle { font-weight: 300; font-size: 28px; letter-spacing: .06em; margin: 8px 0 24px; line-height: 1.6; overflow-wrap: anywhere; text-wrap: balance; }
+  .ihead { display: flex; gap: 14px; align-items: center; }
+  dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 28px; margin: 0 0 28px; padding-block: 20px; border-block: 1px solid var(--rule); font-size: 13.5px; }
+  dl.facts dt { color: var(--muted); letter-spacing: .1em; font-size: 12px; }
   dl.facts dd { margin: 0; overflow-wrap: anywhere; }
-  dl.facts a { color: var(--accent); }
-  .detail { white-space: pre-wrap; overflow-wrap: anywhere; margin-bottom: 8px; }
-  .gal { display: flex; gap: 10px; flex-wrap: wrap; margin-block: 8px 12px; }
-  .gimg { max-width: 240px; max-height: 180px; object-fit: cover; border: 1px solid var(--rule); border-radius: 2px; cursor: zoom-in; }
+  dl.facts a { color: var(--ink); text-underline-offset: 3px; }
+  .detail { white-space: pre-wrap; overflow-wrap: anywhere; margin-bottom: 16px; font-size: 15.5px; line-height: 2; }
+  .gal { display: flex; gap: 12px; flex-wrap: wrap; margin-block: 12px 20px; }
+  .gimg { max-width: 260px; max-height: 190px; object-fit: cover; border: 1px solid var(--rule); border-radius: 2px; cursor: zoom-in; }
   .gimg.big { max-width: 100%; max-height: none; object-fit: contain; cursor: zoom-out; }
-  .ctrl { background: var(--surface); border: 1px solid var(--rule); border-radius: 3px; padding: 12px 14px; margin-block: 14px; display: flex; gap: 10px 14px; flex-wrap: wrap; align-items: end; }
+  .ctrl { background: var(--surface); border-radius: 2px; padding: 20px 24px; margin-block: 24px; display: flex; gap: 14px 20px; flex-wrap: wrap; align-items: end; }
   .ctrl .field { margin: 0; }
+  .ctrl .field input, .ctrl .field select { height: 46px; padding-block: 0; }
   .ctrl .acts { display: flex; gap: 8px; flex-wrap: wrap; }
-  .comments { list-style: none; margin: 8px 0 16px; padding: 0; }
-  .comments li { border-top: 1px solid var(--rule); padding-block: 12px; }
-  .comments li:first-child { border-top: 0; }
-  .chead { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
-  .cname { color: var(--ink); font-weight: 500; font-size: 13.5px; }
-  .badge { font-size: 11px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--rule); }
-  .badge[data-r="admin"] { color: var(--accent); border-color: var(--accent); }
-  .cbody { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 2px; }
+  .comments { list-style: none; margin: 16px 0 40px; padding: 0; }
+  .comments li { border-top: 1px solid var(--rule); padding-block: 22px; }
+  .comments li:first-child { border-top: 0; padding-top: 8px; }
+  .chead { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  .cname { color: var(--ink); font-weight: 600; font-size: 13.5px; letter-spacing: .06em; }
+  .badge { font-size: 11px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--rule-strong); letter-spacing: .1em; }
+  .badge[data-r="admin"] { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
+  .cbody { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 8px; line-height: 1.95; }
+  .foot { margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--rule); display: flex; gap: 12px 20px; flex-wrap: wrap; align-items: center; }
 
-  .foot { margin-top: 36px; padding-top: 14px; border-top: 1px solid var(--rule); display: flex; gap: 10px 18px; flex-wrap: wrap; align-items: center; }
+  /* --- 案件の管理・バッジ --- */
+  .top-in .badge { font-size: 11.5px; padding: 2px 16px; color: var(--on-bar); background: transparent; border-color: rgba(255, 255, 255, .5); letter-spacing: .14em; }
+  .pcard { background: var(--surface); border-radius: 2px; padding: 24px 28px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .ph2 { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+  .urlrow { display: grid; grid-template-columns: 8em minmax(0, 1fr) auto auto; gap: 10px; align-items: center; }
+  .urlrow input { font-size: 12.5px; padding: 8px 12px; }
+  .urlrow a.ghost { text-decoration: none; }
+  .urlrow .label { font-size: 10.5px; }
+  .cact { margin-left: auto; display: flex; gap: 8px; }
+  .userbox { display: flex; gap: 14px; align-items: center; font-size: 12px; letter-spacing: .06em; color: var(--on-bar); }
+  .userbox .linkbtn { color: var(--on-bar); opacity: .75; }
+  .userbox .linkbtn:hover { opacity: 1; color: var(--on-bar); }
+  .access { border-top: 1px solid var(--rule-strong); padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .access textarea { min-height: 84px; font-size: 13px; }
+  .chipline { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .tag { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 3px 6px 3px 14px; font-size: 12.5px; }
+  .tag button { border: 0; background: none; color: var(--muted); padding: 0 6px; font-size: 14px; line-height: 1; }
+  .tag button:hover { color: var(--signal); }
+  .cedit textarea { min-height: 80px; margin-top: 6px; }
 
-  @media (max-width: 680px) {
+  @media (max-width: 900px) {
+    .wrap { padding-inline: 20px; }
+    .brand { font-size: 13.5px; letter-spacing: .26em; }
+    .proj h2 { font-size: 24px; }
+    h2.ititle { font-size: 23px; }
+    .head-block { margin-top: 44px; }
     .list-head { display: none; }
-    .row-i { grid-template-columns: 3em minmax(0, 1fr) auto; grid-template-areas: "no main st" ". when when"; row-gap: 2px; }
+    .row-i { grid-template-columns: 3em minmax(0, 1fr) auto; grid-template-areas: "no main st" ". when when"; row-gap: 4px; padding: 22px 8px; }
     .row-i .c-no { grid-area: no; } .row-i .c-main { grid-area: main; } .row-i .pill { grid-area: st; }
     .row-i .prio { display: none; } .row-i .c-when { grid-area: when; }
-    #listView.adm .row-i { grid-template-columns: 3em minmax(0, 1fr) auto; padding-bottom: 30px; }
-    .rdel { top: auto; bottom: 8px; transform: none; }
+    #listView.adm .row-i { grid-template-columns: 3em minmax(0, 1fr) auto; padding-bottom: 46px; }
+    .rdel { top: auto; bottom: 12px; transform: none; right: 8px; }
     .grid2 { grid-template-columns: 1fr; }
-    .brand { font-size: 19px; }
+    form.panel { padding: 24px 20px; }
+    .urlrow { grid-template-columns: 1fr auto auto; }
+    .urlrow .label { grid-column: 1 / -1; }
+    .ctrl { padding: 18px 16px; }
   }
-  /* --- 案件の管理・バッジ --- */
-  .top-in .badge { font-size: 12px; padding: 1px 12px; }
-  .pcard { border: 1px solid var(--rule); background: var(--surface); border-radius: 3px; padding: 14px 16px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px; }
-  .ph2 { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
-  .urlrow { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
-  .urlrow input { font-size: 12.5px; padding: 6px 8px; font-family: "IBM Plex Mono", ui-monospace, monospace; }
-  .urlrow a.ghost { text-decoration: none; }
-  .skeleton { color: var(--muted); font-size: 13px; padding: 26px 4px; }
-  .cact { margin-left: auto; display: flex; gap: 8px; }
-  .cedit textarea { min-height: 70px; margin-top: 4px; }
-  @media (max-width: 680px) { .urlrow { grid-template-columns: 1fr auto auto; } .urlrow .label { grid-column: 1 / -1; } }
 </style>
 </head>
 <body>
 
 <header class="top">
   <div class="wrap top-in">
-    <h1 class="brand"><a href="#/" id="brandLink" style="color:inherit;text-decoration:none">修正依頼シート</a></h1>
+    <h1 class="brand"><a href="#/" id="brandLink">修正依頼シート</a></h1>
     <span class="sp"></span>
+    <span class="userbox" id="userBox" hidden><span id="userEmail"></span><button type="button" class="linkbtn" id="logoutBtn">ログアウト</button></span>
     <span class="badge" id="roleBadge" hidden></span>
   </div>
 </header>
@@ -222,7 +257,7 @@
 <main class="wrap">
   <!-- ホーム -->
   <section id="homeView" hidden>
-    <h2 class="ititle" style="margin-top:28px">修正依頼シート</h2>
+    <div class="head-block"><span class="eyebrow">Revision Sheet</span><h2 class="ititle" style="margin-top:0">修正依頼シート</h2></div>
     <p>制作会社から届いた案件のURLを開いてください。URLまたはキーを、下に貼り付けて開くこともできます。</p>
     <form class="panel" id="hForm">
       <div class="field"><label for="hKey">案件のURL または キー</label><input type="text" id="hKey" autocomplete="off" placeholder="https://…/#/p/…"></div>
@@ -232,15 +267,41 @@
     <p><a href="#/master" class="linkbtn">制作チームの方はこちら（案件の管理）</a></p>
   </section>
 
+  <!-- メールで認証 -->
+  <section id="loginView" hidden>
+    <div class="head-block"><span class="eyebrow">Sign in</span><h2 class="ititle" style="margin-top:0">メールで認証</h2></div>
+    <p id="loginLead"></p>
+    <form class="panel" id="lgForm">
+      <div class="field"><label for="lgEmail">メールアドレス</label><input type="email" id="lgEmail" autocomplete="email" maxlength="200" placeholder="name@example.com"></div>
+      <div class="row"><span class="hint">入力したアドレスに、ログイン用のリンクを送ります。パスワードは不要です。</span><button type="submit" class="primary" id="lgBtn">ログインリンクを送る</button></div>
+      <p class="err" id="lgErr" hidden></p>
+    </form>
+    <div class="panel" id="lgSent" hidden>
+      <h3>メールを送りました</h3>
+      <p id="lgSentTxt" style="margin-top:0"></p>
+      <p class="hint">メールに書かれたリンクを開くと、ログインできます（リンクは一度だけ使えます）。届かないときは、迷惑メールのフォルダもご確認ください。</p>
+      <div class="row"><button type="button" class="linkbtn" id="lgBack">メールアドレスを入力し直す</button><button type="button" class="ghost" id="lgResend">再送する</button></div>
+    </div>
+    <p><button type="button" class="linkbtn" id="lgOut" hidden>ログアウトして、別のメールアドレスで入り直す</button></p>
+  </section>
+
   <!-- 案件の管理 -->
   <section id="masterView" hidden>
-    <h2 class="ititle" style="margin-top:28px">案件の管理</h2>
+    <div class="head-block"><span class="eyebrow">Administration</span><h2 class="ititle" style="margin-top:0">案件の管理</h2></div>
     <form class="panel" id="mForm">
       <div class="field"><label for="mKey">マスターキー</label><input type="password" id="mKey" autocomplete="off"></div>
       <div class="row"><span class="hint">制作チームだけが持つキーです。案件の追加と、URLの確認ができます。</span><button type="submit" class="primary">開く</button></div>
       <p class="err" id="mErr" hidden></p>
+      <p class="hint" style="margin:16px 0 0">制作チームのメールアドレスをお持ちの方は、<a href="#/login" style="color:inherit">メールでログイン</a>することもできます。</p>
     </form>
     <div id="mBody" hidden>
+      <form class="panel" id="staffForm">
+        <h3>制作チームのメールアドレス</h3>
+        <p class="hint" style="margin-top:0">登録したメールアドレスでログインした人は、すべての案件を「制作チーム」として操作できます。</p>
+        <div id="staffList" class="chipline"></div>
+        <div class="row" style="justify-content:flex-start"><input type="email" id="staffEmail" placeholder="name@example.com" maxlength="200" autocomplete="off" style="max-width:320px"><button type="submit" class="ghost">追加</button></div>
+        <p class="err" id="staffErr" hidden></p>
+      </form>
       <form class="panel" id="mNew">
         <h3>案件を追加</h3>
         <div class="grid2">
@@ -255,6 +316,7 @@
 
   <!-- 一覧 -->
   <section id="listView" hidden>
+    <div class="head-block"><span class="eyebrow">Project</span></div>
     <div class="proj">
       <h2 id="pName"></h2>
       <a id="pSite" target="_blank" rel="noopener noreferrer" hidden></a>
@@ -386,7 +448,13 @@
     invalid_images: "画像の形式か大きさが正しくありません。",
     empty: "内容を入力してください。",
     invalid: "入力内容を確認してください。",
-    network: "通信できませんでした。ネットワークをご確認ください。"
+    network: "通信できませんでした。ネットワークをご確認ください。",
+    invalid_email: "メールアドレスの形式を確認してください。",
+    too_many: "メールアドレスが多すぎます（1案件100件まで）。",
+    over_email_send_rate_limit: "メールの送信回数の上限に達しました。しばらくしてからお試しください。",
+    over_request_rate_limit: "操作が多すぎます。しばらくしてからお試しください。",
+    email_address_invalid: "このメールアドレスは使えません。",
+    email_address_not_authorized: "このメールアドレスには、いまはメールを送れません。制作チームにご連絡ください。"
   };
   function errMsg(e) { return ERRORS[e && e.code] || "うまくいきませんでした。時間をおいてもう一度お試しください。"; }
 
@@ -411,15 +479,73 @@
   function ssSet(k, v) { try { if (v) sessionStorage.setItem(k, v); else sessionStorage.removeItem(k); } catch (e) {} }
 
   /* ============ 通信（Supabase の関数を呼ぶ） ============ */
-  async function rpc(name, args) {
+  /* ============ メール認証（Supabase Auth：メールのリンクでログイン） ============ */
+  var SESSION_KEY = "rs-session", memSess = null;
+  function sessGet() {
+    if (memSess) return memSess;
+    try { var x = JSON.parse(localStorage.getItem(SESSION_KEY)); return x && x.access_token ? x : null; } catch (e) { return null; }
+  }
+  function sessSet(x) { memSess = x; try { if (x) localStorage.setItem(SESSION_KEY, JSON.stringify(x)); else localStorage.removeItem(SESSION_KEY); } catch (e) {} }
+  function jwtEmail(t) {
+    try { var q = JSON.parse(atob(t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))); return String(q.email || ""); } catch (e) { return ""; }
+  }
+  function toSession(j) {
+    return { access_token: j.access_token, refresh_token: j.refresh_token,
+      expires_at: Number(j.expires_at) || (Math.floor(Date.now() / 1000) + (Number(j.expires_in) || 3600)),
+      email: (j.user && j.user.email) || jwtEmail(j.access_token) };
+  }
+  function authUrl(path) { return CFG.url.replace(/\/$/, "") + "/auth/v1/" + path; }
+  async function authPost(path, body) {
+    var r;
+    try { r = await fetch(authUrl(path), { method: "POST", headers: { "Content-Type": "application/json", apikey: CFG.anonKey }, body: JSON.stringify(body) }); }
+    catch (e) { throw { code: "network" }; }
+    var t = await r.text(), j = null;
+    try { j = t ? JSON.parse(t) : null; } catch (e) {}
+    if (!r.ok) throw { code: (j && (j.error_code || j.code)) || "auth_error", status: r.status };
+    return j;
+  }
+  /* ログイン用のリンクをメールで送る。リンクを開くと、このサイトに戻ってくる */
+  async function sendLoginLink(email, backHash) {
+    try { localStorage.setItem("rs-return", backHash || "#/"); } catch (e) {}
+    await authPost("otp?redirect_to=" + encodeURIComponent(location.href.split("#")[0]), { email: email, create_user: true });
+  }
+  async function freshToken() {
+    var x = sessGet(); if (!x) return null;
+    if (x.expires_at - 60 > Date.now() / 1000) return x.access_token;
+    try { x = toSession(await authPost("token?grant_type=refresh_token", { refresh_token: x.refresh_token })); sessSet(x); return x.access_token; }
+    catch (e) { sessSet(null); return null; }
+  }
+  /* メールのリンクから戻ってきたとき（#access_token=… が付いている）の処理 */
+  var authFlash = "";
+  function handleAuthRedirect() {
+    var h = location.hash;
+    if (!/^#(.*&)?(access_token|error)=/.test(h)) return;
+    var q = new URLSearchParams(h.slice(1)), back = "#/";
+    try { back = localStorage.getItem("rs-return") || "#/"; localStorage.removeItem("rs-return"); } catch (e) {}
+    if (!/^#\//.test(back)) back = "#/";
+    if (q.get("access_token")) {
+      sessSet({ access_token: q.get("access_token"), refresh_token: q.get("refresh_token") || "",
+        expires_at: Number(q.get("expires_at")) || (Math.floor(Date.now() / 1000) + (Number(q.get("expires_in")) || 3600)),
+        email: jwtEmail(q.get("access_token")) });
+    } else {
+      authFlash = "ログインできませんでした。リンクの有効期限が切れているか、すでに使われています。もう一度、ログインリンクを送ってください。";
+    }
+    history.replaceState(null, "", location.pathname + location.search + back);
+  }
+
+  async function rpc(name, args, retried) {
     if (!CFG.anonKey) throw { code: "network" };
     var h = { "Content-Type": "application/json", apikey: CFG.anonKey };
-    if (/^eyJ/.test(CFG.anonKey)) h.Authorization = "Bearer " + CFG.anonKey;
+    var tok = await freshToken();
+    if (tok) h.Authorization = "Bearer " + tok;
+    else if (/^eyJ/.test(CFG.anonKey)) h.Authorization = "Bearer " + CFG.anonKey;
     var r;
     try { r = await fetch(CFG.url.replace(/\/$/, "") + "/rest/v1/rpc/" + name, { method: "POST", headers: h, body: JSON.stringify(args || {}) }); }
     catch (e) { throw { code: "network" }; }
     var t = await r.text(), j = null;
     try { j = t ? JSON.parse(t) : null; } catch (e) {}
+    /* ログイン情報が古い・不正なときは、ログアウト状態に戻してやり直す */
+    if (r.status === 401 && tok && !retried) { sessSet(null); renderUser(); return rpc(name, args, true); }
     if (!r.ok) throw { code: (j && j.message) || "error" };
     return j;
   }
@@ -590,7 +716,8 @@
 
   /* ============ 画面の切り替え ============ */
   function show(id) {
-    ["homeView", "masterView", "listView", "issueView"].forEach(function (v) { $("#" + v).hidden = v !== id; });
+    ["homeView", "loginView", "masterView", "listView", "issueView"].forEach(function (v) { $("#" + v).hidden = v !== id; });
+    renderUser();
     var b = $("#roleBadge");
     $("#brandLink").href = (S.key && S.proj && (id === "listView" || id === "issueView")) ? "#/p/" + encodeURIComponent(S.key) : "#/";
     if (id === "listView" || id === "issueView") { b.textContent = ROLE_LABEL[S.proj.role]; b.dataset.r = S.proj.role; b.hidden = false; }
@@ -862,7 +989,7 @@
 
   /* ---- 案件の管理（マスターキー） ---- */
   function urlFor(key) { return location.href.split("#")[0] + "#/p/" + key; }
-  var regenId = null, regenTimer = null;
+  var regenId = null, regenTimer = null, delProj = null, delProjTimer = null;
   function renderMaster(list) {
     $("#mList").innerHTML = list.length ? list.map(function (p) {
       function row(label, key) {
@@ -872,16 +999,33 @@
       return '<div class="pcard"><div class="ph2"><b>' + esc(p.name) + '</b><span class="hint mono">未完了 ' + p.open + " / 全 " + p.total + " 件</span></div>" +
         (p.site_url ? '<div class="hint">' + esc(p.site_url) + "</div>" : "") +
         row("クライアント用", p.client_key) + row("制作チーム用", p.admin_key) +
+        '<div class="access"><span class="label">入場</span>' +
+        '<select data-acc="' + esc(p.id) + '" aria-label="入場の方法"><option value="open"' + (p.access === "open" ? " selected" : "") + '>案件のURLを知っていれば入れる</option>' +
+        '<option value="email"' + (p.access === "email" ? " selected" : "") + '>許可したメールアドレスの方だけ入れる（メール認証）</option></select>' +
+        '<textarea data-mem="' + esc(p.id) + '" placeholder="許可するメールアドレス（1行に1つ）" aria-label="許可するメールアドレス">' + esc((p.members || []).join("\n")) + "</textarea>" +
+        '<div class="row" style="justify-content:flex-start;margin-top:0"><button type="button" class="ghost" data-accsave="' + esc(p.id) + '">入場の設定を保存</button><span class="hint" data-accmsg="' + esc(p.id) + '"></span></div></div>' +
+        '<div class="row" style="justify-content:flex-start;margin-top:4px;gap:20px">' +
         '<button type="button" class="linkbtn danger' + (regenId === p.id ? " confirm" : "") + '" data-regen="' + esc(p.id) + '">' +
-        (regenId === p.id ? "本当に再発行（今のURLは使えなくなります）" : "キーを再発行する") + "</button></div>";
+        (regenId === p.id ? "本当に再発行（今のURLは使えなくなります）" : "キーを再発行する") + "</button>" +
+        '<button type="button" class="linkbtn danger' + (delProj === p.id ? " confirm" : "") + '" data-delproj="' + esc(p.id) + '">' +
+        (delProj === p.id ? "本当に案件を削除（依頼もすべて消えます）" : "案件を削除する") + "</button></div></div>";
     }).join("") : '<p class="empty">まだ案件がありません。上のフォームから追加してください。</p>';
   }
-  async function masterLoad() { renderMaster(await rpc("list_projects", { p_master: mkey })); }
+  function renderStaff(list) {
+    $("#staffList").innerHTML = list.length ? list.map(function (em) {
+      return '<span class="tag">' + esc(em) + '<button type="button" data-rmstaff="' + esc(em) + '" aria-label="' + esc(em) + ' を外す">×</button></span>';
+    }).join("") : '<span class="hint">まだ登録がありません。</span>';
+  }
+  async function masterLoad() {
+    var arg = { p_master: mkey || null };
+    var list = await rpc("list_projects", arg), staff = await rpc("list_staff", arg);
+    renderMaster(list); renderStaff(staff);
+  }
   async function showMaster() {
     show("masterView"); document.title = "案件の管理 | 修正依頼シート";
-    var saved = ssGet("rs-master");
-    if (saved && !mkey) { mkey = saved; try { await masterLoad(); $("#mForm").hidden = true; $("#mBody").hidden = false; return; } catch (e) { mkey = ""; ssSet("rs-master", ""); } }
-    if (mkey) { try { await masterLoad(); $("#mForm").hidden = true; $("#mBody").hidden = false; return; } catch (e) { mkey = ""; } }
+    if (!mkey) mkey = ssGet("rs-master");
+    try { await masterLoad(); $("#mForm").hidden = true; $("#mBody").hidden = false; return; }
+    catch (e) { if (e.code === "forbidden") { mkey = ""; ssSet("rs-master", ""); } }
     $("#mForm").hidden = false; $("#mBody").hidden = true;
   }
   $("#mForm").addEventListener("submit", async function (e) {
@@ -893,7 +1037,7 @@
   $("#mNew").addEventListener("submit", async function (e) {
     e.preventDefault();
     var n = $("#mnName").value.trim(); if (!n) return;
-    try { await rpc("create_project", { p_master: mkey, p_name: n, p_site_url: $("#mnUrl").value.trim() }); $("#mnName").value = ""; $("#mnUrl").value = ""; await masterLoad(); }
+    try { await rpc("create_project", { p_master: mkey || null, p_name: n, p_site_url: $("#mnUrl").value.trim() }); $("#mnName").value = ""; $("#mnUrl").value = ""; await masterLoad(); }
     catch (ex) { alert(errMsg(ex)); }
   });
   $("#mList").addEventListener("click", async function (e) {
@@ -904,13 +1048,94 @@
       catch (er) { inp.select(); c.textContent = "選択しました"; }
       setTimeout(function () { c.textContent = "コピー"; }, 1500); return;
     }
+    var sv = e.target.closest("[data-accsave]");
+    if (sv) {
+      var card = sv.closest(".pcard"), msg = card.querySelector("[data-accmsg]");
+      var emails = card.querySelector("[data-mem]").value.split(/[\s,;、]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+      sv.disabled = true; msg.textContent = "";
+      try { await rpc("set_project_access", { p_master: mkey || null, p_id: sv.dataset.accsave, p_access: card.querySelector("[data-acc]").value, p_emails: emails }); msg.textContent = "保存しました"; }
+      catch (ex) { msg.textContent = errMsg(ex); }
+      sv.disabled = false; return;
+    }
+    var dp = e.target.closest("[data-delproj]");
+    if (dp) {
+      if (delProj !== dp.dataset.delproj) { delProj = dp.dataset.delproj; clearTimeout(delProjTimer); delProjTimer = setTimeout(function () { delProj = null; masterLoad().catch(function () {}); }, 4000); await masterLoad(); return; }
+      clearTimeout(delProjTimer); var pid = delProj; delProj = null;
+      try { await rpc("delete_project", { p_master: mkey || null, p_id: pid }); await masterLoad(); } catch (ex) { alert(errMsg(ex)); }
+      return;
+    }
     var r = e.target.closest("[data-regen]");
     if (r) {
       if (regenId !== r.dataset.regen) { regenId = r.dataset.regen; clearTimeout(regenTimer); regenTimer = setTimeout(function () { regenId = null; masterLoad().catch(function () {}); }, 4000); await masterLoad(); return; }
       clearTimeout(regenTimer); var id = regenId; regenId = null;
-      try { await rpc("regenerate_keys", { p_master: mkey, p_id: id }); await masterLoad(); } catch (ex) { alert(errMsg(ex)); }
+      try { await rpc("regenerate_keys", { p_master: mkey || null, p_id: id }); await masterLoad(); } catch (ex) { alert(errMsg(ex)); }
     }
   });
+
+  $("#staffForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var em = $("#staffEmail").value.trim(), err = $("#staffErr"); err.hidden = true;
+    if (!em) return;
+    try { await rpc("add_staff", { p_master: mkey || null, p_email: em }); $("#staffEmail").value = ""; await masterLoad(); }
+    catch (ex) { err.textContent = errMsg(ex); err.hidden = false; }
+  });
+  $("#staffList").addEventListener("click", async function (e) {
+    var b = e.target.closest("[data-rmstaff]"); if (!b) return;
+    if (!confirm(b.dataset.rmstaff + " を制作チームから外します。よろしいですか？")) return;
+    try { await rpc("remove_staff", { p_master: mkey || null, p_email: b.dataset.rmstaff }); await masterLoad(); }
+    catch (ex) { alert(errMsg(ex)); }
+  });
+
+  /* ============ ログイン（メールのリンク） ============ */
+  var loginBack = "#/", lastEmail = "", cdTimer = null;
+  function renderUser() {
+    var x = sessGet(), b = $("#userBox");
+    if (x && x.email) { $("#userEmail").textContent = x.email; b.hidden = false; } else b.hidden = true;
+  }
+  function logout() {
+    sessSet(null); mkey = ""; ssSet("rs-master", ""); S.key = null; S.proj = null; S.issues = []; S.cur = null;
+    renderUser();
+    if (location.hash === "#/" || location.hash === "") route(); else location.hash = "#/";
+  }
+  function showLogin(reason, back) {
+    loginBack = back || "#/";
+    show("loginView"); document.title = "メールで認証 | 修正依頼シート";
+    var x = sessGet();
+    $("#loginLead").textContent = reason === "not_allowed"
+      ? "ログイン中のメールアドレス（" + (x ? x.email : "") + "）には、この案件を開く権限がありません。許可されたメールアドレスで入り直してください。"
+      : reason === "staff" ? "制作チームの方は、登録したメールアドレスでログインしてください。"
+      : "この案件は、許可されたメールアドレスの方だけが開けます。メールアドレスを入力してください。";
+    $("#lgOut").hidden = !(x && x.email);
+    $("#lgForm").hidden = false; $("#lgSent").hidden = true;
+    var er = $("#lgErr"); er.textContent = authFlash; er.hidden = !authFlash; authFlash = "";
+  }
+  function startCooldown() {
+    var n = 60, b = $("#lgResend"); clearInterval(cdTimer); b.disabled = true;
+    cdTimer = setInterval(function () {
+      n--; if (n <= 0) { clearInterval(cdTimer); b.disabled = false; b.textContent = "再送する"; } else b.textContent = "再送する（あと " + n + " 秒）";
+    }, 1000);
+    b.textContent = "再送する（あと 60 秒）";
+  }
+  async function sendLink(em) {
+    await sendLoginLink(em, loginBack);
+    lastEmail = em; $("#lgSentTxt").textContent = em + " にログイン用のリンクを送りました。";
+    $("#lgForm").hidden = true; $("#lgSent").hidden = false; startCooldown();
+  }
+  $("#lgForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var em = $("#lgEmail").value.trim(), err = $("#lgErr"); err.hidden = true;
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { err.textContent = ERRORS.invalid_email; err.hidden = false; return; }
+    var btn = $("#lgBtn"); btn.disabled = true;
+    try { await sendLink(em); }
+    catch (ex) { err.textContent = ERRORS[ex.code] || "メールを送れませんでした。時間をおいてもう一度お試しください。"; err.hidden = false; }
+    finally { btn.disabled = false; }
+  });
+  $("#lgResend").addEventListener("click", async function () {
+    try { await sendLink(lastEmail); } catch (ex) { $("#lgSentTxt").textContent = ERRORS[ex.code] || "メールを送れませんでした。"; }
+  });
+  $("#lgBack").addEventListener("click", function () { $("#lgSent").hidden = true; $("#lgForm").hidden = false; });
+  $("#lgOut").addEventListener("click", function () { sessSet(null); renderUser(); showLogin("auth_required", loginBack); });
+  $("#logoutBtn").addEventListener("click", logout);
 
   /* ============ ルーティング ============ */
   var routing = 0;
@@ -920,10 +1145,15 @@
     if (parts[0] === "p" && parts[1]) {
       var key = decodeURIComponent(parts[1]);
       try { if (S.key !== key || !S.proj) await loadProject(key); }
-      catch (e) { if (my !== routing) return; S.key = null; S.proj = null; showHome(errMsg(e)); return; }
+      catch (e) {
+        if (my !== routing) return; S.key = null; S.proj = null;
+        if (e.code === "auth_required" || e.code === "not_allowed") { showLogin(e.code, location.hash); return; }
+        showHome(errMsg(e)); return;
+      }
       if (my !== routing) return;
       if (parts[2] && /^\d+$/.test(parts[2])) await showIssue(parseInt(parts[2], 10)); else showList();
     } else if (parts[0] === "master") showMaster();
+    else if (parts[0] === "login") showLogin("staff", "#/master");
     else showHome();
   }
   window.addEventListener("hashchange", route);
@@ -931,6 +1161,8 @@
     if (!$("#listView").hidden && !document.hidden && $("#newForm").hidden && S.key) refreshList();
   }, 30000);
 
+  handleAuthRedirect();
+  renderUser();
   route();
 })();
 </script>
